@@ -2,12 +2,9 @@ from flask import Flask
 from flask_cors import CORS
 from flask import Flask, request
 import hashlib
-import secrets
+from jwt_utils import build_token
 
 ADMIN_PASSWORD = 'd278077bbfe7285a144d4b5b11adb9cf'
-
-def build_token():
-    return secrets.token_urlsafe(32)
 
 app = Flask(__name__)
 CORS(app)
@@ -24,6 +21,7 @@ def login():
 	token = build_token()
 	return {'token': token}, 200
 
+@app.route('/')
 def hello_world():
 	x = 'world'
 	return f"Hello, {x}"
