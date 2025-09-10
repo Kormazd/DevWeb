@@ -1,13 +1,13 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
 @app.route('/')
-def hello_world():
-	x = 'world'
-	return f"Hello, {x}"
+def index():
+    """Page d'accueil du quiz Supercell"""
+    return render_template('index.html')
 
 if __name__ == "__main__":
-    app.run(port=5001)
+    app.run(debug=True, port=5001)
