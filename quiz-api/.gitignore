@@ -106,3 +106,5 @@ settings.local.json
 # Fichiers de lock (garder package-lock.json mais ignorer yarn.lock si on utilise npm)
 yarn.lock
 pnpm-lock.yaml
+
+
