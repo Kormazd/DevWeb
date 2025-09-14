@@ -17,8 +17,9 @@ def get_db_connection():
     return conn
 
 def init_db():
-    """Initialise la base de données avec la table Question"""
+    """Initialise la base de données avec les tables Question et Answer"""
     with get_db_connection() as conn:
+        # Table des questions
         conn.execute('''
             CREATE TABLE IF NOT EXISTS Question (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,9 +27,38 @@ def init_db():
                 text TEXT,
                 position INTEGER NOT NULL UNIQUE,
                 image TEXT,
-                possibleAnswers TEXT
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        
+        # Table des réponses
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS Answer (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question_id INTEGER NOT NULL,
+                text TEXT NOT NULL,
+                isCorrect BOOLEAN NOT NULL DEFAULT 0,
+                position INTEGER NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (question_id) REFERENCES Question(id) ON DELETE CASCADE
+            )
+        ''')
+        
+        # Index pour améliorer les performances
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_question_position ON Question(position)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_answer_question_id ON Answer(question_id)')
+        
+        # Trigger pour mettre à jour updated_at
+        conn.execute('''
+            CREATE TRIGGER IF NOT EXISTS update_question_timestamp 
+            AFTER UPDATE ON Question
+            FOR EACH ROW
+            BEGIN
+                UPDATE Question SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END
+        ''')
+        
         conn.commit()
 
 init_db()
@@ -39,16 +69,33 @@ class Question:
     text: str | None = None
     position: int | None = None
     image: str | None = None
-    possibleAnswers: str | None = None
+    id: int | None = None
+    answers: list = None
+
+@dataclass
+class Answer:
+    text: str
+    isCorrect: bool
+    position: int
+    question_id: int | None = None
     id: int | None = None
 
 def question_from_dict(data: dict) -> Question:
+    answers = []
+    if 'answers' in data and isinstance(data['answers'], list):
+        for i, answer_data in enumerate(data['answers']):
+            answers.append(Answer(
+                text=answer_data.get('text', ''),
+                isCorrect=answer_data.get('isCorrect', False),
+                position=i + 1
+            ))
+    
     return Question(
         title=(data.get('title') or '').strip(),
         text=data.get('text'),
         position=data.get('position'),
         image=data.get('image'),
-        possibleAnswers=data.get('possibleAnswers')
+        answers=answers
     )
 
 def question_to_dict(q: Question) -> dict:
@@ -58,28 +105,61 @@ def question_to_dict(q: Question) -> dict:
         'text': q.text,
         'position': q.position,
         'image': q.image,
-        'possibleAnswers': q.possibleAnswers
+        'answers': [answer_to_dict(a) for a in (q.answers or [])]
+    }
+
+def answer_to_dict(a: Answer) -> dict:
+    return {
+        'id': a.id,
+        'text': a.text,
+        'isCorrect': a.isCorrect,
+        'position': a.position
     }
 
 def insert_question(q: Question) -> Question:
     with get_db_connection() as conn:
         cur = conn.cursor()
+        # Insérer la question
         cur.execute(
             """
-            INSERT INTO Question (title, text, position, image, possibleAnswers)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO Question (title, text, position, image)
+            VALUES (?, ?, ?, ?)
             """,
-            (q.title, q.text, q.position, q.image, q.possibleAnswers)
+            (q.title, q.text, q.position, q.image)
         )
-        qid = cur.lastrowid
-        row = conn.execute('SELECT * FROM Question WHERE id = ?', (qid,)).fetchone()
+        question_id = cur.lastrowid
+        
+        # Insérer les réponses si elles existent
+        if q.answers:
+            for answer in q.answers:
+                cur.execute(
+                    """
+                    INSERT INTO Answer (question_id, text, isCorrect, position)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (question_id, answer.text, answer.isCorrect, answer.position)
+                )
+        
+        # Récupérer la question complète avec ses réponses
+        row = conn.execute('SELECT * FROM Question WHERE id = ?', (question_id,)).fetchone()
+        answers = conn.execute(
+            'SELECT * FROM Answer WHERE question_id = ? ORDER BY position', 
+            (question_id,)
+        ).fetchall()
+        
         created = Question(
             title=row['title'],
             text=row['text'],
             position=row['position'],
             image=row['image'],
-            possibleAnswers=row['possibleAnswers'],
-            id=row['id']
+            id=row['id'],
+            answers=[Answer(
+                id=a['id'],
+                text=a['text'],
+                isCorrect=bool(a['isCorrect']),
+                position=a['position'],
+                question_id=a['question_id']
+            ) for a in answers]
         )
         return created
 
@@ -123,13 +203,10 @@ def post_question():
         return {"error": "Invalid payload"}, 400
     # Insert into DB
     created = insert_question(q)
-    # Simulate answers in response (hard-coded for now)
+    # Retourner la question avec ses réponses
     response_body = {
         "question": question_to_dict(created),
-        "answers": [
-            {"id": 1, "title": "Answer A", "isCorrect": False},
-            {"id": 2, "title": "Answer B", "isCorrect": True}
-        ]
+        "answers": [answer_to_dict(a) for a in created.answers]
     }
     return response_body, 201
 
@@ -140,14 +217,27 @@ def get_questions():
             questions = conn.execute('SELECT * FROM Question ORDER BY position').fetchall()
             result = []
             for q in questions:
-                result.append(question_to_dict(Question(
+                # Récupérer les réponses pour chaque question
+                answers = conn.execute(
+                    'SELECT * FROM Answer WHERE question_id = ? ORDER BY position', 
+                    (q['id'],)
+                ).fetchall()
+                
+                question = Question(
                     id=q['id'],
                     title=q['title'],
                     text=q['text'],
                     position=q['position'],
                     image=q['image'],
-                    possibleAnswers=q['possibleAnswers']
-                )))
+                    answers=[Answer(
+                        id=a['id'],
+                        text=a['text'],
+                        isCorrect=bool(a['isCorrect']),
+                        position=a['position'],
+                        question_id=a['question_id']
+                    ) for a in answers]
+                )
+                result.append(question_to_dict(question))
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -160,14 +250,28 @@ def get_question(question_id):
             if not question:
                 return jsonify({"error": "Question not found"}), 404
             
-            return jsonify(question_to_dict(Question(
+            # Récupérer les réponses
+            answers = conn.execute(
+                'SELECT * FROM Answer WHERE question_id = ? ORDER BY position', 
+                (question_id,)
+            ).fetchall()
+            
+            q = Question(
                 id=question['id'],
                 title=question['title'],
                 text=question['text'],
                 position=question['position'],
                 image=question['image'],
-                possibleAnswers=question['possibleAnswers']
-            ))), 200
+                answers=[Answer(
+                    id=a['id'],
+                    text=a['text'],
+                    isCorrect=bool(a['isCorrect']),
+                    position=a['position'],
+                    question_id=a['question_id']
+                ) for a in answers]
+            )
+            
+            return jsonify(question_to_dict(q)), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

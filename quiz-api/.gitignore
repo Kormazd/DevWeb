@@ -39,27 +39,6 @@ wheels/
 MANIFEST
 
 # ===========================================
-# NODE.JS / NPM
-# ===========================================
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-.npm
-.yarn-integrity
-
-# ===========================================
-# BUILD / DIST
-# ===========================================
-dist/
-dist-ssr/
-build/
-coverage/
-*.local
-
-# ===========================================
 # LOGS
 # ===========================================
 logs/
@@ -109,12 +88,6 @@ tests/
 # ===========================================
 .dockerignore
 docker-compose.override.yml
-
-# ===========================================
-# CYPRESS (si utilisé)
-# ===========================================
-/cypress/videos/
-/cypress/screenshots/
 
 # ===========================================
 # FICHIERS SPÉCIFIQUES AU PROJET
