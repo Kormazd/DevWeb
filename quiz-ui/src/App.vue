@@ -26,6 +26,9 @@ import { RouterView } from 'vue-router'
 </template>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=MedievalSharp&family=Sigmar+One&display=swap');
+@import './assets/neo-medieval.css';
+
 * {
   margin: 0;
   padding: 0;
@@ -33,10 +36,11 @@ import { RouterView } from 'vue-router'
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Cinzel', serif;
   line-height: 1.6;
-  color: #333;
-  background-color: #f8f9fa;
+  color: #2c3e50;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  min-height: 100vh;
 }
 
 #app {
@@ -50,6 +54,8 @@ body {
   color: white;
   padding: 1rem 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  position: relative;
 }
 
 .nav-container {
@@ -62,11 +68,13 @@ body {
 }
 
 .nav-brand {
+  font-family: 'Sigmar One', cursive;
   font-size: 1.5rem;
   font-weight: bold;
-  color: white;
+  color: #d4af37;
   text-decoration: none;
   transition: color 0.3s ease;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .nav-brand:hover {

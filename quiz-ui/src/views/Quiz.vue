@@ -1,75 +1,85 @@
 <template>
   <div class="quiz">
-    <div v-if="loading" class="loading">
-      <p>Chargement du quiz...</p>
-    </div>
+    <BackgroundScene :questionIndex="currentQuestionIndex" />
     
-    <div v-else-if="error" class="error">
-      <h2>Erreur</h2>
-      <p>{{ error }}</p>
-      <button @click="loadQuestions" class="btn btn-primary">Réessayer</button>
-    </div>
-    
-    <div v-else-if="questions.length === 0" class="no-questions">
-      <h2>Aucune question disponible</h2>
-      <p>Le quiz ne contient pas encore de questions.</p>
-      <router-link to="/" class="btn btn-primary">Retour à l'accueil</router-link>
-    </div>
-    
-    <div v-else class="quiz-container">
-      <div class="quiz-header">
-        <h1>Quiz</h1>
+    <div class="container">
+      <div v-if="loading" class="loading card">
+        <h2 class="h-royal">Chargement du quiz...</h2>
         <div class="progress">
-          <div class="progress-bar" :style="{ width: progressPercentage + '%' }"></div>
+          <div class="progress__bar"></div>
         </div>
-        <p>Question {{ currentQuestionIndex + 1 }} sur {{ questions.length }}</p>
       </div>
       
-      <div class="question-container">
-        <div class="question">
-          <h2>{{ currentQuestion.title }}</h2>
-          <p v-if="currentQuestion.text">{{ currentQuestion.text }}</p>
-          <img v-if="currentQuestion.image" :src="currentQuestion.image" :alt="currentQuestion.title" class="question-image">
-        </div>
-        
-        <div class="answers">
-          <div 
-            v-for="(answer, index) in currentAnswers" 
-            :key="answer.id || index"
-            class="answer-option"
-            :class="{ selected: selectedAnswer === index }"
-            @click="selectAnswer(index)"
-          >
-            {{ answer.text }}
+      <div v-else-if="error" class="error card">
+        <h2 class="h-royal">Erreur</h2>
+        <p>{{ error }}</p>
+        <button @click="loadQuestions" class="btn btn--primary">Réessayer</button>
+      </div>
+      
+      <div v-else-if="questions.length === 0" class="no-questions card">
+        <h2 class="h-royal">Aucune question disponible</h2>
+        <p>Le quiz ne contient pas encore de questions.</p>
+        <router-link to="/" class="btn btn--primary">Retour à l'accueil</router-link>
+      </div>
+      
+      <div v-else class="quiz-container card">
+        <div class="quiz-header">
+          <h1 class="h-royal h-royal--gold">Quiz Royale</h1>
+          <div class="progress">
+            <div class="progress__bar" :style="{ width: progressPercentage + '%' }"></div>
+          </div>
+          <div class="parchment">
+            Question {{ currentQuestionIndex + 1 }} sur {{ questions.length }}
           </div>
         </div>
         
-        <div class="quiz-actions">
-          <button 
-            v-if="currentQuestionIndex > 0" 
-            @click="previousQuestion" 
-            class="btn btn-secondary"
-          >
-            Précédent
-          </button>
+        <div class="question-container">
+          <div class="question">
+            <h2 class="h-royal">{{ currentQuestion.title }}</h2>
+            <p v-if="currentQuestion.text" class="question-text">{{ currentQuestion.text }}</p>
+            <img v-if="currentQuestion.image" :src="currentQuestion.image" :alt="currentQuestion.title" class="question-image">
+          </div>
           
-          <button 
-            v-if="currentQuestionIndex < questions.length - 1" 
-            @click="nextQuestion" 
-            class="btn btn-primary"
-            :disabled="selectedAnswer === null"
-          >
-            Suivant
-          </button>
+          <div class="list-answers">
+            <div 
+              v-for="(answer, index) in currentAnswers" 
+              :key="answer.id || index"
+              class="answer"
+              :class="{ 'answer--correct': selectedAnswer === index }"
+              @click="selectAnswer(index)"
+            >
+              <div class="answer__index">{{ index + 1 }}</div>
+              {{ answer.text }}
+            </div>
+          </div>
           
-          <button 
-            v-else 
-            @click="finishQuiz" 
-            class="btn btn-success"
-            :disabled="selectedAnswer === null"
-          >
-            Terminer le Quiz
-          </button>
+          <div class="quiz-actions">
+            <button 
+              v-if="currentQuestionIndex > 0" 
+              @click="previousQuestion" 
+              class="btn btn--ghost"
+            >
+              Précédent
+            </button>
+            
+            <button 
+              v-if="currentQuestionIndex < questions.length - 1" 
+              @click="nextQuestion" 
+              class="btn btn--gold"
+              :disabled="selectedAnswer === null"
+            >
+              Suivant
+            </button>
+            
+            <button 
+              v-else 
+              @click="finishQuiz" 
+              class="btn btn--gold"
+              :disabled="selectedAnswer === null"
+            >
+              Terminer le Quiz
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -79,6 +89,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import BackgroundScene from '@/components/BackgroundScene.vue'
 
 const router = useRouter()
 const questions = ref([])
@@ -156,14 +167,16 @@ onMounted(() => {
 
 <style scoped>
 .quiz {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
+  position: relative;
+  min-height: 100vh;
+  padding: 2rem 0;
 }
 
 .loading, .error, .no-questions {
   text-align: center;
   padding: 3rem;
+  z-index: 2;
+  position: relative;
 }
 
 .error h2, .no-questions h2 {
@@ -172,36 +185,20 @@ onMounted(() => {
 }
 
 .quiz-container {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  z-index: 2;
+  position: relative;
 }
 
 .quiz-header {
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  background: linear-gradient(135deg, #2c3e50, #34495e);
   color: white;
   padding: 2rem;
   text-align: center;
+  border-radius: 15px 15px 0 0;
 }
 
 .quiz-header h1 {
   margin: 0 0 1rem 0;
-  font-size: 2.5rem;
-}
-
-.progress {
-  background: rgba(255, 255, 255, 0.3);
-  height: 8px;
-  border-radius: 4px;
-  margin: 1rem 0;
-  overflow: hidden;
-}
-
-.progress-bar {
-  background: white;
-  height: 100%;
-  transition: width 0.3s ease;
 }
 
 .question-container {
@@ -214,10 +211,11 @@ onMounted(() => {
   font-size: 1.5rem;
 }
 
-.question p {
+.question-text {
   color: #7f8c8d;
   margin-bottom: 1rem;
   line-height: 1.6;
+  font-family: 'Cinzel', serif;
 }
 
 .question-image {
@@ -225,77 +223,23 @@ onMounted(() => {
   height: auto;
   border-radius: 0.5rem;
   margin: 1rem 0;
-}
-
-.answers {
-  margin: 2rem 0;
-}
-
-.answer-option {
-  background: #f8f9fa;
-  border: 2px solid #e9ecef;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin: 0.5rem 0;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.answer-option:hover {
-  background: #e9ecef;
-  border-color: #3498db;
-}
-
-.answer-option.selected {
-  background: #3498db;
-  color: white;
-  border-color: #2980b9;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .quiz-actions {
   display: flex;
   justify-content: space-between;
   margin-top: 2rem;
+  gap: 1rem;
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.quiz-actions .btn {
+  flex: 1;
+  max-width: 200px;
 }
 
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #3498db;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2980b9;
-}
-
-.btn-secondary {
-  background: #95a5a6;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #7f8c8d;
-}
-
-.btn-success {
-  background: #27ae60;
-  color: white;
-}
-
-.btn-success:hover:not(:disabled) {
-  background: #229954;
 }
 </style>
