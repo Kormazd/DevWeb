@@ -6,11 +6,11 @@ import { RouterView } from 'vue-router'
   <div id="app">
     <nav class="navbar">
       <div class="nav-container">
-        <router-link to="/" class="nav-brand">Quiz App</router-link>
+        <router-link to="/" class="nav-brand">Clash Quiz</router-link>
         <div class="nav-links">
-          <router-link to="/" class="nav-link">Accueil</router-link>
-          <router-link to="/quiz" class="nav-link">Quiz</router-link>
-          <router-link to="/admin" class="nav-link">Admin</router-link>
+        <router-link to="/" class="nav-link">Accueil</router-link>
+        <router-link to="/new-quiz" class="nav-link">Quiz</router-link>
+        <router-link to="/admin" class="nav-link">Admin</router-link>
         </div>
       </div>
     </nav>
@@ -19,15 +19,13 @@ import { RouterView } from 'vue-router'
       <RouterView />
     </main>
     
-    <footer class="footer">
-      <p>&copy; 2024 Quiz Application. Tous droits réservés.</p>
-    </footer>
+    
   </div>
 </template>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=MedievalSharp&family=Sigmar+One&display=swap');
-@import './assets/neo-medieval.css';
+@import '@/assets/neo-medieval.css';
 
 * {
   margin: 0;
@@ -108,6 +106,8 @@ body {
 .main-content {
   flex: 1;
   padding: 2rem 0;
+  position: relative;
+  z-index: 2; /* ensure view content is above background */
 }
 
 .footer {

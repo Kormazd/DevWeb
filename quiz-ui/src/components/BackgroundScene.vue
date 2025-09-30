@@ -46,7 +46,8 @@ const charName = computed(() => {
   return props.mapping(props.questionIndex)
 })
 
-const makeUrl = (name) => `http://localhost:5001/assets/${name}.png`
+// Servez les images via le dossier public: public/images/{name}.png
+const makeUrl = (name) => `/images/${name}.png`
 
 // Double buffer pour fondu
 const activeLayer = ref('A')     // 'A' ou 'B'
@@ -101,7 +102,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 0; /* ensure content sits above */
   overflow: hidden;
 }
 
@@ -117,6 +118,7 @@ onMounted(() => {
   opacity: 0;
   transition: opacity 0.6s ease-in-out;
   transform: scale(1.04);
+  background-color: #1e3c72; /* bleu de fond si l'image tarde */
 }
 
 .bg-scene__layer.is-active {

@@ -8,7 +8,8 @@ export const characters = [
 
 // Mapping des questions vers les personnages
 export const questionCharacterMapping = (questionIndex) => {
-  return characters[questionIndex % characters.length]
+  // Force l'image Méga Chevalier pour le fond
+  return 'mega-knight'
 }
 
 // Informations sur les personnages

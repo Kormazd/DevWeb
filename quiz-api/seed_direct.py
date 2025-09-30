@@ -115,44 +115,40 @@ def build_questions() -> List[Dict[str, Any]]:
 
 def insert_questions_direct():
     """Insère directement les questions dans la base de données SQLite"""
-    conn = sqlite3.connect('quiz.db')
-    cursor = conn.cursor()
-    
-    # Vider les tables existantes
-    cursor.execute('DELETE FROM Answer')
-    cursor.execute('DELETE FROM Question')
-    conn.commit()
-    
-    questions = build_questions()
-    created = 0
-    
-    for question in questions:
-        try:
-            # Insérer la question
-            cursor.execute('''
-                INSERT INTO Question (title, text, position, image)
-                VALUES (?, ?, ?, ?)
-            ''', (question['title'], question['text'], question['position'], question['image']))
-            
-            question_id = cursor.lastrowid
-            
-            # Insérer les réponses
-            for answer in question['answers']:
-                cursor.execute('''
-                    INSERT INTO Answer (question_id, text, isCorrect, position)
+    with sqlite3.connect('quiz.db') as conn:
+        cur = conn.cursor()
+        cur.execute('PRAGMA foreign_keys = ON')
+
+        # Vider les tables existantes
+        cur.execute('DELETE FROM Answer')
+        cur.execute('DELETE FROM Question')
+        conn.commit()
+
+        questions = build_questions()
+        created = 0
+
+        for question in questions:
+            try:
+                cur.execute('''
+                    INSERT INTO Question (title, text, position, image)
                     VALUES (?, ?, ?, ?)
-                ''', (question_id, answer['text'], answer['isCorrect'], answer['position']))
-            
-            created += 1
-            print(f"✓ Question {question['position']}: {question['title']}")
-            
-        except Exception as e:
-            print(f"✗ Erreur pour question {question['position']}: {e}")
-    
-    conn.commit()
-    conn.close()
-    
-    print(f"\n🎉 Terminé ! {created} questions créées dans la base de données.")
+                ''', (question['title'], question['text'], question['position'], question['image']))
+                question_id = cur.lastrowid
+
+                for answer in question['answers']:
+                    cur.execute('''
+                        INSERT INTO Answer (question_id, text, isCorrect, position)
+                        VALUES (?, ?, ?, ?)
+                    ''', (question_id, answer['text'], int(answer['isCorrect']), answer['position']))
+
+                created += 1
+                print(f"✓ Question {question['position']}: {question['title']}")
+            except Exception as e:
+                print(f"✗ Erreur pour question {question['position']}: {e}")
+
+        conn.commit()
+
+        print(f"\n🎉 Terminé ! {created} questions créées dans la base de données.")
 
 if __name__ == "__main__":
     insert_questions_direct()

@@ -20,17 +20,10 @@ except ImportError:
 
 def make_q(position: int, title: str, text: str, options: List[str], correct_index: int, image: str = "") -> Dict[str, Any]:
     """
-    Construit un dictionnaire question compatible avec une API type:
-    {
-      "title": str,
-      "text": str,
-      "image": str,
-      "position": int,
-      "answers": [
-         {"text": str, "position": int, "isCorrect": bool}, ...
-      ]
-    }
+    Construit un dictionnaire question compatible avec l'API.
+    Valide que l'index de la bonne réponse est dans les bornes.
     """
+    assert 0 <= correct_index < len(options), "correct_index hors bornes"
     answers = []
     for i, opt in enumerate(options, start=1):
         answers.append({
@@ -148,12 +141,16 @@ def post_questions(base_url: str, token: str = "") -> None:
     created, failed = 0, 0
     for item in questions:
         url = f"{base_url.rstrip('/')}/questions"
-        resp = requests.post(url, headers=headers, json=item, timeout=10)
-        if resp.status_code in (200, 201):
-            created += 1
-        else:
+        try:
+            resp = requests.post(url, headers=headers, json=item, timeout=10)
+            if resp.status_code in (200, 201):
+                created += 1
+            else:
+                failed += 1
+                print(f"[!] {resp.status_code} position={item['position']} body={resp.text}")
+        except requests.RequestException as e:
             failed += 1
-            print(f"[!] Échec ({resp.status_code}) pour position={item['position']} -> {resp.text[:200]}")
+            print(f"[!] network error position={item['position']} err={e}")
 
     print(f"Terminé. Créées: {created}, Échecs: {failed}")
 
