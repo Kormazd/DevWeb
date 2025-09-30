@@ -43,8 +43,8 @@
           </div>
           
           <div v-if="showAddForm" class="add-question-form">
-            <h4>Nouvelle Question</h4>
-            <form @submit.prevent="addQuestion">
+            <h4>{{ editMode ? 'Éditer la Question' : 'Nouvelle Question' }}</h4>
+            <form @submit.prevent="editMode ? submitEdit() : addQuestion()">
               <div class="form-group">
                 <label for="title">Titre :</label>
                 <input type="text" id="title" v-model="newQuestion.title" required class="form-control">
@@ -104,7 +104,7 @@
               
               <div class="form-actions">
                 <button type="submit" class="btn btn-success" :disabled="loading">
-                  {{ loading ? 'Ajout...' : 'Ajouter' }}
+                  {{ editMode ? (loading ? 'Mise à jour...' : 'Mettre à jour') : (loading ? 'Ajout...' : 'Ajouter') }}
                 </button>
                 <button type="button" @click="cancelAdd" class="btn btn-secondary">
                   Annuler
@@ -128,6 +128,9 @@
                   </p>
                 </div>
                 <div class="question-actions">
+                  <button @click="startEdit(question)" class="btn btn-primary btn-sm">
+                    Éditer
+                  </button>
                   <button @click="deleteQuestion(question.id)" class="btn btn-danger btn-sm">
                     Supprimer
                   </button>
@@ -161,6 +164,8 @@ const newQuestion = ref({
     { text: '', isCorrect: false }
   ]
 })
+const editMode = ref(false)
+const editQuestion = ref(null)
 
 const login = async () => {
   try {
@@ -180,6 +185,7 @@ const login = async () => {
       token.value = data.token
       isAuthenticated.value = true
       password.value = ''
+      localStorage.setItem('adminToken', token.value)
       loadQuestions()
     } else {
       loginError.value = 'Mot de passe incorrect'
@@ -195,6 +201,7 @@ const logout = () => {
   isAuthenticated.value = false
   token.value = ''
   questions.value = []
+  localStorage.removeItem('adminToken')
 }
 
 const loadQuestions = async () => {
@@ -227,6 +234,45 @@ const addQuestion = async () => {
     } else {
       const error = await response.json()
       alert('Erreur lors de l\'ajout: ' + (error.error || 'Erreur inconnue'))
+    }
+  } catch {
+    alert('Erreur de connexion')
+  } finally {
+    loading.value = false
+  }
+}
+
+const startEdit = (question) => {
+  editMode.value = true
+  showAddForm.value = true
+  editQuestion.value = JSON.parse(JSON.stringify(question))
+  newQuestion.value = {
+    title: question.title || '',
+    text: question.text || '',
+    position: question.position || 1,
+    image: question.image || '',
+    answers: (question.answers || []).map(a => ({ text: a.text, isCorrect: !!a.isCorrect }))
+  }
+}
+
+const submitEdit = async () => {
+  if (!editQuestion.value) return
+  try {
+    loading.value = true
+    const response = await fetch(`http://localhost:5001/questions/${editQuestion.value.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token.value}`
+      },
+      body: JSON.stringify(newQuestion.value)
+    })
+    if (response.ok) {
+      await loadQuestions()
+      cancelAdd()
+    } else {
+      const error = await response.json()
+      alert('Erreur lors de la mise à jour: ' + (error.error || 'Erreur inconnue'))
     }
   } catch {
     alert('Erreur de connexion')
@@ -270,6 +316,8 @@ const removeAnswer = (index) => {
 
 const cancelAdd = () => {
   showAddForm.value = false
+  editMode.value = false
+  editQuestion.value = null
   newQuestion.value = {
     title: '',
     text: '',

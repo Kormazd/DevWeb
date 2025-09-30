@@ -46,7 +46,7 @@ const charName = computed(() => {
   return props.mapping(props.questionIndex)
 })
 
-const makeUrl = (name) => `/images/${name}.png`
+const makeUrl = (name) => `http://localhost:5001/assets/${name}.png`
 
 // Double buffer pour fondu
 const activeLayer = ref('A')     // 'A' ou 'B'
@@ -136,6 +136,12 @@ onMounted(() => {
 /* Variables CSS pour la durée de transition */
 :root {
   --fade-duration: 600ms;
+}
+
+/* Ne pas bloquer les clics sur le contenu au-dessus */
+.bg-scene,
+.bg-scene__layer {
+  pointer-events: none;
 }
 </style>
 

@@ -3,6 +3,21 @@
     <BackgroundScene :questionIndex="currentQuestionIndex" />
     
     <div class="container">
+      <!-- Écran d'introduction -->
+      <div v-if="stage === 'intro'" class="intro card">
+        <h1 class="h-royal h-royal--gold">Prêt pour le Quiz ?</h1>
+        <p class="intro-text">Entrez votre nom puis lancez le quiz.</p>
+        <div class="form">
+          <label for="playerName" class="label">Votre nom</label>
+          <input id="playerName" v-model="playerName" type="text" class="input" placeholder="Anonyme" />
+        </div>
+        <div class="parchment" v-if="questions.length">Questions: {{ questions.length }}</div>
+        <div class="actions">
+          <button class="btn btn--gold" :disabled="loading || !questions.length" @click="startQuiz">Commencer</button>
+          <router-link to="/" class="btn btn--ghost">Retour</router-link>
+        </div>
+      </div>
+
       <div v-if="loading" class="loading card">
         <h2 class="h-royal">Chargement du quiz...</h2>
         <div class="progress">
@@ -22,7 +37,7 @@
         <router-link to="/" class="btn btn--primary">Retour à l'accueil</router-link>
       </div>
       
-      <div v-else class="quiz-container card">
+      <div v-else-if="stage === 'quiz'" class="quiz-container card">
         <div class="quiz-header">
           <h1 class="h-royal h-royal--gold">Quiz Royale</h1>
           <div class="progress">
@@ -37,7 +52,12 @@
           <div class="question">
             <h2 class="h-royal">{{ currentQuestion.title }}</h2>
             <p v-if="currentQuestion.text" class="question-text">{{ currentQuestion.text }}</p>
-            <img v-if="currentQuestion.image" :src="currentQuestion.image" :alt="currentQuestion.title" class="question-image">
+            <img 
+              v-if="currentQuestion.image_url"
+              :src="`http://localhost:5001${currentQuestion.image_url}`" 
+              :alt="currentQuestion.title" 
+              class="question-image"
+            >
           </div>
           
           <div class="list-answers">
@@ -82,6 +102,15 @@
           </div>
         </div>
       </div>
+
+      <div v-else-if="stage === 'submitted'" class="submitted card">
+        <h2 class="h-royal">Bravo {{ result?.player || 'Anonyme' }} !</h2>
+        <p>Score: <strong>{{ result?.score }}</strong> / {{ result?.total }}</p>
+        <div class="actions">
+          <router-link to="/" class="btn btn--gold">Voir le classement</router-link>
+          <button class="btn btn--ghost" @click="restart">Rejouer</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -98,14 +127,19 @@ const selectedAnswer = ref(null)
 const answers = ref([])
 const loading = ref(true)
 const error = ref(null)
+const stage = ref('intro') // 'intro' | 'quiz' | 'submitted'
+const playerName = ref('')
+const submitting = ref(false)
+const result = ref(null)
 
 const currentQuestion = computed(() => questions.value[currentQuestionIndex.value] || {})
 const currentAnswers = computed(() => {
   return currentQuestion.value.answers || []
 })
-const progressPercentage = computed(() => 
-  ((currentQuestionIndex.value + 1) / questions.value.length) * 100
-)
+const progressPercentage = computed(() => {
+  const total = questions.value.length || 1
+  return ((currentQuestionIndex.value + 1) / total) * 100
+})
 
 const loadQuestions = async () => {
   try {
@@ -122,6 +156,10 @@ const loadQuestions = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const startQuiz = () => {
+  stage.value = 'quiz'
 }
 
 const selectAnswer = (index) => {
@@ -146,18 +184,45 @@ const previousQuestion = () => {
   }
 }
 
-const finishQuiz = () => {
+const finishQuiz = async () => {
   if (selectedAnswer.value !== null) {
     answers.value.push({
       questionId: currentQuestion.value.id,
       answer: selectedAnswer.value
     })
   }
-  
-  // Ici on pourrait envoyer les réponses au serveur
-  console.log('Réponses:', answers.value)
-  alert('Quiz terminé ! Merci d\'avoir participé.')
-  router.push('/')
+
+  try {
+    submitting.value = true
+    const response = await fetch('http://localhost:5001/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        player: (playerName.value || 'Anonyme').trim() || 'Anonyme',
+        answers: answers.value
+      })
+    })
+    if (response.ok || response.status === 201) {
+      result.value = await response.json()
+      stage.value = 'submitted'
+    } else {
+      alert("Une erreur est survenue lors de l'envoi du score.")
+      router.push('/')
+    }
+  } catch (e) {
+    router.push('/')
+  } finally {
+    submitting.value = false
+  }
+}
+
+const restart = () => {
+  // Réinitialiser l'état pour rejouer
+  currentQuestionIndex.value = 0
+  selectedAnswer.value = null
+  answers.value = []
+  result.value = null
+  stage.value = 'intro'
 }
 
 onMounted(() => {
@@ -170,6 +235,40 @@ onMounted(() => {
   position: relative;
   min-height: 100vh;
   padding: 2rem 0;
+}
+
+.intro, .submitted {
+  text-align: center;
+  padding: 3rem;
+  z-index: 2;
+  position: relative;
+}
+
+.intro .form {
+  max-width: 420px;
+  margin: 1rem auto 0 auto;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.intro .actions, .submitted .actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
 }
 
 .loading, .error, .no-questions {
