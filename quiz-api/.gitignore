@@ -1,0 +1,110 @@
+# ===========================================
+# FICHIERS DE BASE DE DONNÉES
+# ===========================================
+*.db
+*.sqlite
+*.sqlite3
+DB.db
+quiz.db
+
+# ===========================================
+# ENVIRONNEMENTS VIRTUELS PYTHON
+# ===========================================
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ===========================================
+# LOGS
+# ===========================================
+logs/
+*.log
+
+# ===========================================
+# ENVIRONNEMENTS DE DÉVELOPPEMENT
+# ===========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ===========================================
+# ÉDITEURS ET IDEs
+# ===========================================
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===========================================
+# FICHIERS TEMPORAIRES
+# ===========================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# ===========================================
+# FICHIERS DE TEST
+# ===========================================
+test_api.py
+test_*.py
+*_test.py
+tests/
+
+# ===========================================
+# DOCKER
+# ===========================================
+.dockerignore
+docker-compose.override.yml
+
+# ===========================================
+# FICHIERS SPÉCIFIQUES AU PROJET
+# ===========================================
+# Fichiers de configuration locaux
+config.local.json
+settings.local.json
+
+# Fichiers de cache
+.cache/
+.parcel-cache/
+
+# Fichiers de build TypeScript
+*.tsbuildinfo
+
+# Fichiers de lock (garder package-lock.json mais ignorer yarn.lock si on utilise npm)
+yarn.lock
+pnpm-lock.yaml
+
+
