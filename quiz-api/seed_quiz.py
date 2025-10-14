@@ -1,20 +1,9 @@
-#!/usr/bin/env python3
-# seed_quiz.py
-# Script de seed pour un quiz Clash Royale / Clash of Clans.
-# - Par défaut: imprime le JSON complet (à copier-coller si besoin).
-# - Optionnel: envoi direct à l'API via POST /questions (une par une).
-#
-# Exemple:
-#   python seed_quiz.py                          # imprime le JSON
-#   python seed_quiz.py --post                   # POST vers http://127.0.0.1:5001
-#   python seed_quiz.py --post --base-url http://localhost:5001 --token "Bearer x.y.z"
-
 import json
 import argparse
 from typing import List, Dict, Any
 
 try:
-    import requests  # seulement nécessaire si tu utilises --post
+    import requests  
 except ImportError:
     requests = None
 

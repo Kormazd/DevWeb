@@ -1,9 +1,7 @@
 // Configuration des personnages pour les animations de fond
 export const characters = [
   'mega-knight',
-  'prince', 
-  'dark-prince',
-  'golem'
+  'prince'
 ]
 
 // Mapping des questions vers les personnages
@@ -21,13 +19,5 @@ export const characterInfo = {
   'prince': {
     name: 'Prince',
     description: 'Troupe qui charge et inflige des dégâts doublés'
-  },
-  'dark-prince': {
-    name: 'Prince Ténébreux',
-    description: 'Version sombre du Prince avec des capacités spéciales'
-  },
-  'golem': {
-    name: 'Golem',
-    description: 'Tank puissant qui se divise en petits golems'
   }
 }
