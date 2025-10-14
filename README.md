@@ -164,8 +164,12 @@ DevWeb/
 4. **Mode multijoueur** - Quiz en temps réel
 5. **Thèmes supplémentaires** - Autres jeux Supercell
 
+## 👥 Équipe de développement
+
+- **Julien** 👨‍💻
+- **Tom** 👨‍💻  
+- **Lilian** 👨‍💻
+
 ---
 
 **Développé avec ❤️ pour les fans de Clash Royale et Clash of Clans**
-
-
