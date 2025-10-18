@@ -1,20 +1,10 @@
-import axios from 'axios'
+import api from '@/services/api'
 
-const instance = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:5001/'}`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
-
-async function call(method, resource, data = null, token = null) {
-  const headers = {}
-  if (token) headers.authorization = `Bearer ${token}`
+async function request(method, url, data = null) {
   try {
-    const response = await instance({ method, url: resource, data, headers })
+    const response = await api({ method, url, data })
     return { status: response.status, data: response.data }
   } catch (error) {
-    console.error(error)
     const status = error?.response?.status || 500
     const dataResp = error?.response?.data || { error: 'Request failed' }
     return { status, data: dataResp }
@@ -22,30 +12,27 @@ async function call(method, resource, data = null, token = null) {
 }
 
 const quizApiService = {
-  call,
-  getQuizInfo() {
-    return call('get', 'quiz-info')
+  // Info & scores
+  getQuizInfo() { return request('get', '/quiz-info') },
+  getScores(limit = 10) { return request('get', `/scores?limit=${encodeURIComponent(limit)}`) },
+
+  // Questions
+  getQuestions(params = {}) {
+    const query = typeof params.position === 'number' ? `?position=${params.position}` : ''
+    return request('get', `/questions${query}`)
   },
-  getQuestions() {
-    return call('get', 'questions')
-  },
-  submit(payload) {
-    return call('post', 'submit', payload)
-  },
-  login(password) {
-    return call('post', 'login', { password })
-  },
-  postQuestion(question, token) {
-    return call('post', 'questions', question, token)
-  },
-  putQuestion(id, question, token) {
-    return call('put', `questions/${id}`, question, token)
-  },
-  deleteQuestion(id, token) {
-    return call('delete', `questions/${id}`, null, token)
-  },
+  getQuestion(id) { return request('get', `/questions/${id}`) },
+  postQuestion(question) { return request('post', '/questions', question) },
+  putQuestion(id, question) { return request('put', `/questions/${id}`, question) },
+  deleteQuestion(id) { return request('delete', `/questions/${id}`) },
+
+  // Auth (usually use AuthService instead)
+  login(password) { return request('post', '/login', { password }) },
+
+  // Participation & score
+  saveParticipation(playerName, answers) { return request('post', '/participations', { playerName, answers }) },
+  getParticipation(playerName) { return request('get', `/participations/${encodeURIComponent(playerName)}`) },
+  postScore(player, score, total) { return request('post', '/scores', { player, score, total }) },
 }
 
 export default quizApiService
-
-

@@ -7,6 +7,7 @@ import AdminGate from '../components/AdminGate.vue'
 
 const routes = [
   { path: '/new-quiz', name: 'NewQuizPage', component: NewQuizPage },
+  { path: '/quiz', redirect: { name: 'NewQuizPage' } },
   { path: '/', name: 'HomePage', component: HomePage },
   { path: '/admin', name: 'Admin', component: AdminGate },
 ]

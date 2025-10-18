@@ -1,0 +1,53 @@
+:root {
+    --fade-duration: 550ms;
+    --bg-scale: 1.04;
+  }
+  
+  /* Calque plein écran, cliquable au travers */
+  .bg-scene {
+    position: fixed;
+    inset: 0;
+    z-index: -1; /* derrière l'app */
+    overflow: hidden;
+    pointer-events: none;
+    background:
+      radial-gradient(1200px 600px at 70% -10%, rgba(255,255,255,.06), transparent 60%),
+      linear-gradient(180deg, #0d1b3a 0%, #0a1430 70%, #0a1228 100%);
+  }
+  
+  /* Deux couches pour faire le fondu crossfade */
+  .bg-scene__layer {
+    position: absolute;
+    inset: 0;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: contain; /* pour garder la transparence des renders */
+    filter: drop-shadow(0 14px 28px rgba(0,0,0,.55));
+    transform: translate3d(0,0,0) scale(var(--bg-scale));
+    opacity: 0;
+    transition: opacity var(--fade-duration) ease;
+    will-change: transform, opacity;
+  }
+  
+  /* léger vernis pour lisibilité du texte */
+  .bg-scene__glow {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(800px 400px at 20% -10%, rgba(255,255,255,.12), transparent 50%),
+      linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.35));
+  }
+  
+  /* Parallax (desktop) */
+  @media (pointer:fine) {
+    .bg-scene[data-parallax="true"] .bg-scene__layer {
+      transition: opacity var(--fade-duration) ease, transform 120ms ease-out;
+    }
+  }
+  
+  /* Utilitaires pour appliquer une image via classe (fallback simple) */
+  .bg--mega-knight { background-image: url('/images/Mega-Knight_03.png'); }
+  .bg--prince { background-image: url('/images/Prince_03.png'); }
+  
+  /* Classe appliquée à la couche visible */
+  .is-active { opacity: 1; }

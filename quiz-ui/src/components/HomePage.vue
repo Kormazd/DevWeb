@@ -1,24 +1,40 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import HeroBanner from './HeroBanner.vue'
-import BackgroundScene from './BackgroundScene.vue'
 import Storage from '@/services/ParticipationStorageService'
+import QuizApi from '@/services/QuizApiService'
 
 const topLocalScore = ref(0)
-onMounted(() => {
+const quizSize = ref(null)
+const topScores = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
   topLocalScore.value = Math.max(Number(Storage.getScore() || 0), 0)
+  const [info, scores] = await Promise.all([
+    QuizApi.getQuizInfo(),
+    QuizApi.getScores(5),
+  ])
+  quizSize.value = info?.data?.size ?? null
+  topScores.value = Array.isArray(scores?.data) ? scores.data : []
+  loading.value = false
 })
 </script>
 
 <template>
   <section class="page">
-    <BackgroundScene :question-index="0" />
-    <HeroBanner />
     <div class="scores">
       <h2>Top scores</h2>
       <div class="score-item">
         <span>Meilleur score local</span>
         <strong>{{ topLocalScore }}</strong>
+      </div>
+      <div class="score-item" v-if="quizSize !== null">
+        <span>Nombre de questions</span>
+        <strong>{{ quizSize }}</strong>
+      </div>
+      <div class="score-item" v-for="(s, idx) in topScores" :key="idx">
+        <span>{{ s.player }}</span>
+        <strong>{{ s.score }} / {{ s.total }}</strong>
       </div>
     </div>
   </section>

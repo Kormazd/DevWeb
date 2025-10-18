@@ -1,0 +1,233 @@
+/* Styles pour l'arrière-plan et les effets visuels */
+body {
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%),
+      linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    position: relative;
+  }
+  
+  /* Effet de particules flottantes */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.3), transparent),
+      radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.2), transparent),
+      radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.4), transparent),
+      radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.3), transparent),
+      radial-gradient(2px 2px at 160px 30px, rgba(255, 255, 255, 0.2), transparent);
+    background-repeat: repeat;
+    background-size: 200px 100px;
+    animation: float 20s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  @keyframes float {
+    0% { transform: translateY(0px) rotate(0deg); }
+    100% { transform: translateY(-100px) rotate(360deg); }
+  }
+  
+  /* Effet de brillance sur les cartes */
+  .card {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: rotate(45deg);
+    transition: all 0.6s ease;
+    opacity: 0;
+  }
+  
+  .card:hover::after {
+    animation: shine 0.6s ease;
+  }
+  
+  @keyframes shine {
+    0% {
+      transform: translateX(-100%) translateY(-100%) rotate(45deg);
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(100%) translateY(100%) rotate(45deg);
+      opacity: 0;
+    }
+  }
+  
+  /* Effet de brouillard */
+  .hero {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.1) 100%);
+    z-index: 1;
+  }
+  
+  /* Effet de lueur sur les éléments importants */
+  .h-royal {
+    position: relative;
+  }
+  
+  .h-royal::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.3), transparent);
+    border-radius: 8px;
+    filter: blur(10px);
+    z-index: -1;
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes glow {
+    from { opacity: 0.5; }
+    to { opacity: 0.8; }
+  }
+  
+  /* Effet de profondeur sur les boutons */
+  .btn {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+  }
+  
+  .btn:hover {
+    transform: translateY(-2px) rotateX(5deg);
+  }
+  
+  .btn:active {
+    transform: translateY(0) rotateX(0deg);
+  }
+  
+  /* Effet de vague sur les réponses */
+  .answer {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .answer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .answer:hover::before {
+    left: 100%;
+  }
+  
+  /* Effet de pulsation sur les éléments actifs */
+  .answer--correct {
+    animation: correct-pulse 0.6s ease;
+  }
+  
+  @keyframes correct-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  /* Effet de tremblement sur les erreurs */
+  .answer--incorrect {
+    animation: incorrect-shake 0.5s ease;
+  }
+  
+  @keyframes incorrect-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  
+  /* Effet de brouillard sur les arrière-plans */
+  .character-bg::before {
+    filter: blur(1px);
+    opacity: 0.1;
+  }
+  
+  /* Effet de profondeur sur les cartes */
+  .card {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px) rotateX(2deg);
+  }
+  
+  /* Effet de lueur sur la barre de vie */
+  .health-bar {
+    box-shadow: 
+      0 0 10px rgba(255, 71, 87, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  
+  .health-bar.high {
+    box-shadow: 
+      0 0 15px rgba(46, 213, 115, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Effet de particules sur les arènes */
+  .arena-1::before,
+  .arena-2::before,
+  .arena-3::before,
+  .arena-4::before,
+  .arena-5::before,
+  .arena-6::before,
+  .arena-7::before,
+  .arena-8::before,
+  .arena-9::before,
+  .arena-10::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.3), transparent),
+      radial-gradient(1px 1px at 40px 70px, rgba(255, 255, 255, 0.2), transparent);
+    background-repeat: repeat;
+    background-size: 50px 50px;
+    animation: sparkle 3s linear infinite;
+    pointer-events: none;
+  }
+  
+  @keyframes sparkle {
+    0% { transform: translateY(0px); }
+    100% { transform: translateY(-50px); }
+  }

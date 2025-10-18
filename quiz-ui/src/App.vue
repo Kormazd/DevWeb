@@ -1,5 +1,6 @@
 <script setup>
 import { RouterView } from 'vue-router'
+
 </script>
 
 <template>
@@ -24,8 +25,15 @@ import { RouterView } from 'vue-router'
 </template>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=MedievalSharp&family=Sigmar+One&display=swap');
-@import '@/assets/neo-medieval.css';
+@import '/static/css/style.css';
+
+@font-face {
+  font-family: 'ClashRegular';
+  src: url('./assets/Fonts/Clash_Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 * {
   margin: 0;
@@ -34,7 +42,7 @@ import { RouterView } from 'vue-router'
 }
 
 body {
-  font-family: 'Cinzel', serif;
+  font-family: 'ClashRegular', sans-serif;
   line-height: 1.6;
   color: #2c3e50;
   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -66,7 +74,7 @@ body {
 }
 
 .nav-brand {
-  font-family: 'Sigmar One', cursive;
+  font-family: 'ClashRegular', sans-serif;
   font-size: 1.5rem;
   font-weight: bold;
   color: #d4af37;
