@@ -1,20 +1,13 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import Storage from '@/services/ParticipationStorageService'
 import QuizApi from '@/services/QuizApiService'
 
-const topLocalScore = ref(0)
 const quizSize = ref(null)
-const topScores = ref([])
 const loading = ref(true)
 
 onMounted(async () => {
-  topLocalScore.value = Math.max(Number(Storage.getScore() || 0), 0)
-  
-  // Un seul appel API au lieu de deux
   const info = await QuizApi.getQuizInfo()
   quizSize.value = info?.data?.size ?? null
-  topScores.value = Array.isArray(info?.data?.scores) ? info.data.scores : []
   loading.value = false
 })
 </script>
@@ -24,22 +17,24 @@ onMounted(async () => {
     <div class="header">
       <h1>🏰 Quiz Clash Royale & Clash of Clans</h1>
       <p>Teste tes connaissances sur les jeux Supercell !</p>
+      <div class="quiz-info" v-if="!loading && quizSize !== null">
+        <p>📊 {{ quizSize }} questions t'attendent</p>
+      </div>
       <router-link to="/new-quiz" class="btn-start">🎮 Commencer le quiz</router-link>
     </div>
     
-    <div class="scores">
-      <h2>Top scores</h2>
-      <div class="score-item">
-        <span>Meilleur score local</span>
-        <strong>{{ topLocalScore }}</strong>
+    <div class="features">
+      <div class="feature-card">
+        <h3>🎯 Questions variées</h3>
+        <p>Clash Royale et Clash of Clans</p>
       </div>
-      <div class="score-item" v-if="quizSize !== null">
-        <span>Nombre de questions</span>
-        <strong>{{ quizSize }}</strong>
+      <div class="feature-card">
+        <h3>🏆 Classements</h3>
+        <p>Compare tes scores avec les autres</p>
       </div>
-      <div class="score-item" v-for="(s, idx) in topScores" :key="idx">
-        <span>{{ s.playerName }}</span>
-        <strong>{{ s.score }} / {{ s.total }}</strong>
+      <div class="feature-card">
+        <h3>🎨 Design immersif</h3>
+        <p>Interface médiévale et animations</p>
       </div>
     </div>
   </section>
@@ -55,7 +50,7 @@ onMounted(async () => {
 
 .header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   background: rgba(0,0,0,0.35);
   border-radius: 8px;
   padding: 2rem 1.5rem;
@@ -69,9 +64,23 @@ onMounted(async () => {
 }
 
 .header p {
-  margin: 0 0 1.5rem;
+  margin: 0 0 1rem;
   opacity: 0.9;
   font-size: 1.1rem;
+}
+
+.quiz-info {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  background: rgba(212, 175, 55, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.quiz-info p {
+  margin: 0;
+  color: #d4af37;
+  font-weight: 600;
 }
 
 .btn-start {
@@ -92,29 +101,36 @@ onMounted(async () => {
   box-shadow: 0 6px 12px rgba(0,0,0,0.3);
 }
 
-.scores { 
-  position: relative; 
-  z-index: 3; 
-  background: rgba(0,0,0,0.35); 
-  border-radius: 8px; 
-  padding: 1rem 1.25rem; 
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
-.scores h2 { 
-  margin: 0 0 0.75rem; 
+.feature-card {
+  background: rgba(0,0,0,0.35);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.feature-card h3 {
+  margin: 0 0 0.5rem;
   color: #d4af37;
+  font-size: 1.2rem;
 }
 
-.score-item { 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  padding: 0.5rem 0; 
-  border-top: 1px solid rgba(255,255,255,0.15); 
-}
-
-.score-item:first-of-type { 
-  border-top: 0; 
+.feature-card p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.95rem;
 }
 </style>
 

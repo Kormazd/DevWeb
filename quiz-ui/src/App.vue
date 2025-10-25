@@ -10,7 +10,7 @@ import { RouterView } from 'vue-router'
         <router-link to="/" class="nav-brand">Clash Quiz</router-link>
         <div class="nav-links">
         <router-link to="/" class="nav-link">Accueil</router-link>
-        <router-link to="/new-quiz" class="nav-link">Quiz</router-link>
+        <router-link to="/scores" class="nav-link">Score</router-link>
         <router-link to="/admin" class="nav-link">Admin</router-link>
         </div>
       </div>

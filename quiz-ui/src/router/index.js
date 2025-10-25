@@ -4,10 +4,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '../components/HomePage.vue'
 import NewQuizPage from '../components/NewQuizPage.vue'
 import AdminGate from '../components/AdminGate.vue'
+import ScoresPage from '../components/ScoresPage.vue'
 
 const routes = [
   { path: '/new-quiz', name: 'NewQuizPage', component: NewQuizPage },
   { path: '/quiz', redirect: { name: 'NewQuizPage' } },
+  { path: '/scores', name: 'ScoresPage', component: ScoresPage },
   { path: '/', name: 'HomePage', component: HomePage },
   { path: '/admin', name: 'Admin', component: AdminGate },
 ]
