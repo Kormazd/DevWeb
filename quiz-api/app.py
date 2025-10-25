@@ -165,8 +165,20 @@ def quiz_info():
     """Récupère les informations de base du quiz (nombre de questions et de scores)."""
     with get_db_connection() as conn:
         questions_count = conn.execute('SELECT COUNT(*) FROM Question').fetchone()[0]
-        scores_count = conn.execute('SELECT COUNT(*) FROM Score').fetchone()[0]
-    return jsonify({"size": questions_count})
+        scores_rows = conn.execute('''
+            SELECT player, score, total, created_at 
+            FROM Score 
+            ORDER BY score DESC, created_at ASC 
+            LIMIT 10
+        ''').fetchall()
+        scores = []
+        for row in scores_rows:
+            scores.append({
+                "playerName": row['player'],
+                "score": row['score'],
+                "date": row['created_at']
+            })
+    return jsonify({"size": questions_count, "scores": scores})
 
 @app.get('/scores')
 def get_scores():
