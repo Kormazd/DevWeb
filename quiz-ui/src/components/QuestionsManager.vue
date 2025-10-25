@@ -37,15 +37,10 @@ async function saveOrder() {
   if (!Array.isArray(questions.value) || !questions.value.length) return
   saving.value = true
   try {
-    const updates = questions.value.map((q, idx) => ({ ...q, position: idx + 1 }))
-    for (const q of updates) {
-      await QuizApi.putQuestion(q.id, {
-        title: q.title,
-        text: q.text,
-        position: q.position,
-        image: q.image,
-        answers: q.answers || [],
-      })
+    const ids = questions.value.map(q => q.id)
+    const { status, data } = await QuizApi.reorderQuestions(ids)
+    if (!(status >= 200 && status < 300)) {
+      throw new Error(data?.error || 'Réordonnancement impossible')
     }
     await load()
   } catch (e) {
@@ -73,7 +68,7 @@ async function saveOrder() {
         @drop="onDrop(idx)"
       >
         <div class="item__main">
-          <span class="handle">↕</span>
+          <span class="handle">≡</span>
           <strong>#{{ idx + 1 }}</strong>
           <span class="title">{{ q.title }}</span>
         </div>
@@ -104,4 +99,3 @@ async function saveOrder() {
 .actions { margin-top: 0.75rem; }
 .btn { padding: 0.6rem 0.9rem; border: none; border-radius: 6px; background: #d4af37; color: #222; font-weight: 700; cursor: pointer; }
 </style>
-

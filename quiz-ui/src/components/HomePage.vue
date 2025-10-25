@@ -132,21 +132,46 @@ onMounted(async () => {
 }
 
 .btn-start {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #d4af37, #f1c40f);
-  color: #222;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 700;
+  border: none;
+  border-radius: 15px;
+  font-family: var(--font-body);
   font-size: 1.1rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition-medium);
+  box-shadow: var(--shadow-button);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.btn-start::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: var(--transition-medium);
+}
+
+.btn-start:hover::before {
+  left: 100%;
 }
 
 .btn-start:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
 }
 
 .features {
