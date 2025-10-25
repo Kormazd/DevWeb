@@ -6,6 +6,8 @@ from jwt_utils import build_token, decode_token, JwtError
 
 # --- Configuration ---
 app = Flask(__name__)
+# Cache static files by default (7 days)
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 60 * 60 * 24 * 7
 CORS(app)
 
 DB_PATH = 'DB_Browser_for_SQLite.db'
@@ -155,10 +157,13 @@ def home():
 
 @app.get('/assets/<path:filename>')
 def serve_asset(filename):
-    """Sert les fichiers statiques (images)."""
+    """Sert les fichiers statiques (images) avec mise en cache côté client."""
     if not os.path.exists(os.path.join(ASSETS_DIR, filename)):
         return jsonify({"error": "Asset not found"}), 404
-    return send_from_directory(ASSETS_DIR, filename)
+    # 7 jours de cache côté client
+    resp = send_from_directory(ASSETS_DIR, filename, cache_timeout=60 * 60 * 24 * 7)
+    resp.headers['Cache-Control'] = 'public, max-age=604800'
+    return resp
 
 @app.get('/quiz-info')
 def quiz_info():
