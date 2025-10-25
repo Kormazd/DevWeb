@@ -1,26 +1,46 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import QuizApi from '@/services/QuizApiService'
+import megaUrl from '@/assets/Mega_Knight_03.png'
+import princeUrl from '@/assets/Prince_03.png'
+import reineUrl from '@/assets/Reine_archer_pekka.png'
 
 const quizSize = ref(null)
 const loading = ref(true)
+const leftImg = ref('')
+const rightImg = ref('')
+
+const assetFiles = [megaUrl, princeUrl, reineUrl]
+function setRandomSides() {
+  const pick = () => assetFiles[Math.floor(Math.random() * assetFiles.length)]
+  let l = pick(); let r = pick(); let guard = 0
+  while (r === l && guard < 5) { r = pick(); guard++ }
+  leftImg.value = l
+  rightImg.value = r
+}
 
 onMounted(async () => {
   const info = await QuizApi.getQuizInfo()
   quizSize.value = info?.data?.size ?? null
   loading.value = false
+  setRandomSides()
 })
 </script>
 
 <template>
   <section class="page">
-    <div class="header">
+    
+    <div class="hero-sides">
+      <img class="side-image left" :src="leftImg" alt="illustration gauche" />
+      <div class="header">
       <h1>🏰 Quiz Clash Royale & Clash of Clans</h1>
       <p>Teste tes connaissances sur les jeux Supercell !</p>
       <div class="quiz-info" v-if="!loading && quizSize !== null">
         <p>📊 {{ quizSize }} questions t'attendent</p>
       </div>
       <router-link to="/new-quiz" class="btn-start">🎮 Commencer le quiz</router-link>
+    </div>
+      <img class="side-image right" :src="rightImg" alt="illustration droite" />
     </div>
     
     <div class="features">
@@ -43,10 +63,20 @@ onMounted(async () => {
 <style scoped>
 .page { 
   color: #fff; 
-  max-width: 960px; 
-  margin: 0 auto; 
-  padding: 2rem 1rem; 
+  max-width: none; 
+  width: 100%; 
+  margin: 0; 
+  padding: 2rem 0; 
 }
+
+/* Images latérales accueil */
+.hero-sides { width: min(1700px, 98vw); margin: 0 auto 2rem; display: grid; grid-template-columns: minmax(260px, 1fr) minmax(780px, 880px) minmax(260px, 1fr); column-gap: 2rem; align-items: start; }
+.side-image { width: 100%; max-width: 560px; height: auto; object-fit: contain; filter: drop-shadow(0 12px 30px rgba(0,0,0,0.4)); opacity: 0.98; transition: transform .25s ease, opacity .25s ease; margin-top: 24px; }
+.side-image.left { justify-self: end; margin-right: 0; }
+.side-image.right { justify-self: start; margin-left: 0; }
+.side-image:hover { transform: translateY(-4px) scale(1.02); opacity: 1; }
+@media (max-width: 1000px) { .side-image { max-width: 360px; } }
+@media (max-width: 860px) { .hero-sides { grid-template-columns: 1fr; } .side-image { display: none; } }
 
 .header {
   text-align: center;
@@ -133,5 +163,3 @@ onMounted(async () => {
   font-size: 0.95rem;
 }
 </style>
-
-
