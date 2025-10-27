@@ -19,8 +19,18 @@ import { RouterView } from 'vue-router'
     <main class="main-content">
       <RouterView />
     </main>
-    
-    
+    <footer class="footer contact-footer">
+      <div class="contact-box">
+        <div class="contact-left">
+          <strong>Créateurs</strong>
+          <span>Julien • Tom • Lilian</span>
+        </div>
+        <div class="contact-right">
+          <span>Classe: <em>E4FI_1I</em></span>
+          <span>École: <em>ESIEE Paris</em></span>
+        </div>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -111,24 +121,12 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.main-content {
-  flex: 1;
-  padding: 2rem 0;
-  position: relative;
-  z-index: 2; /* ensure view content is above background */
-}
+.main-content { flex: 1; padding: 2rem 0 5.5rem; position: relative; z-index: 2; }
 
-.footer {
-  background: #2c3e50;
-  color: white;
-  text-align: center;
-  padding: 1rem 0;
-  margin-top: auto;
-}
-
-.footer p {
-  margin: 0;
-}
+.footer { background: rgba(44, 62, 80, 0.9); color: white; padding: 0.75rem 0; position: fixed; left: 0; right: 0; bottom: 0; z-index: 9; backdrop-filter: blur(6px); border-top: 1px solid rgba(255,255,255,0.1); }
+.contact-box { max-width: 1200px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.95rem; }
+.contact-left strong { color: #f5d36b; margin-right: 0.5rem; }
+.contact-right span { margin-left: 1rem; opacity: 0.95; }
 
 /* Responsive */
 @media (max-width: 768px) {
