@@ -24,6 +24,12 @@ const correctAnswerIndex = ref(null)
 const currentQuestion = computed(() => questions.value[currentIndex.value] || null)
 const total = computed(() => questions.value.length)
 
+// Easter egg: Supercell cheat (UNIQUEMENT en majuscules)
+const isCheatActive = computed(() => {
+  const playerName = Storage.getPlayerName()
+  return playerName && playerName.trim() === 'SUPERCELL'
+})
+
 // Images latérales aléatoires (packagées par Vite)
 const assetFiles = [megaUrl, princeUrl, reineUrl]
 const leftSide = ref('')
@@ -80,8 +86,8 @@ async function nextQuestion() {
 
   answersByQuestionId.value[q.id] = { selectedIndex: selectedIndex.value }
   
-  // Attendre 2.5 secondes avant de passer à la question suivante
-  await new Promise(resolve => setTimeout(resolve, 2500))
+  // Attendre 1 seconde avant de passer à la question suivante
+  await new Promise(resolve => setTimeout(resolve, 1000))
   
   // Réinitialiser pour la question suivante
   showFeedback.value = false
@@ -172,7 +178,8 @@ function shareProgress() {
                     :class="{
                       'qc__answer--selected': selectedIndex === idx,
                       'qc__answer--correct': showFeedback && correctAnswerIndex === idx,
-                      'qc__answer--incorrect': showFeedback && selectedIndex === idx && idx !== correctAnswerIndex
+                      'qc__answer--incorrect': showFeedback && selectedIndex === idx && idx !== correctAnswerIndex,
+                      'qc__answer--cheat': isCheatActive && a.isCorrect && !showFeedback
                     }"
                     type="button"
                     :disabled="showFeedback"
@@ -180,6 +187,7 @@ function shareProgress() {
                   >
                     <span class="qc__badge">{{ idx + 1 }}</span>
                     <span class="qc__text">{{ a.text }}</span>
+                    <span v-if="isCheatActive && a.isCorrect && !showFeedback" class="cheat-indicator">✨</span>
                   </button>
                 </div>
                 <div class="actions">
@@ -242,8 +250,12 @@ function shareProgress() {
 .qc__answer--incorrect { background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; color: #fff; animation: incorrectShake 0.5s ease; }
 .qc__answer--incorrect .qc__text { color: #fff; }
 .qc__answer--incorrect .qc__badge { background: rgba(255, 255, 255, 0.3); color: #fff; }
+.qc__answer--cheat { border-color: #f1c40f !important; background: linear-gradient(135deg, rgba(241, 196, 15, 0.15), rgba(255, 215, 0, 0.15)) !important; animation: cheatGlow 1.5s ease-in-out infinite; box-shadow: 0 0 15px rgba(241, 196, 15, 0.4); }
+.qc__answer--cheat .qc__text { color: #d4af37 !important; font-weight: 600; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+.qc__answer--cheat .qc__badge { background: linear-gradient(135deg, rgba(212, 175, 55, 0.8), rgba(241, 196, 15, 0.8)); color: #fff; }
 .qc__badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #2c3e50; color: #fff; font-weight: 700; flex-shrink: 0; }
 .qc__text { color: #2c3e50; }
+.cheat-indicator { margin-left: auto; font-size: 1.5rem; animation: sparkle 1s ease-in-out infinite; }
 
 /* Layout images latérales */
 .quiz-sides { width: min(1900px, 98vw); margin: 0 auto; display: grid; grid-template-columns: minmax(260px, 1fr) minmax(860px, 1040px) minmax(260px, 1fr); align-items: start; column-gap: 1.5rem; }
@@ -360,5 +372,15 @@ function shareProgress() {
   0%, 100% { transform: translateX(0); }
   10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
   20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+@keyframes cheatGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(241, 196, 15, 0.6); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
 }
 </style>
