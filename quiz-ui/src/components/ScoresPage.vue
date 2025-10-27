@@ -48,13 +48,16 @@ onMounted(async () => {
 
         <div class="scores" v-if="!loading">
           <h2>Top scores</h2>
+          
+          <!-- Mini bloc: Nombre de questions -->
+          <div class="mini-info" v-if="quizSize !== null">
+            <span class="mini-info__label">📚 Nombre de questions</span>
+            <strong class="mini-info__value">{{ quizSize }}</strong>
+          </div>
+
           <div class="score-item local-score">
             <span>🛡️ Ton meilleur score local</span>
             <strong>{{ topLocalScore }}</strong>
-          </div>
-          <div class="score-item" v-if="quizSize !== null">
-            <span>📚 Nombre de questions</span>
-            <strong>{{ quizSize }}</strong>
           </div>
           <div class="score-item" v-for="(s, idx) in topScores" :key="idx" :class="{ 'top-score': idx === 0 }">
             <span>
@@ -64,7 +67,7 @@ onMounted(async () => {
               <span v-else>#{{ idx + 1 }}</span>
               {{ s.playerName }}
             </span>
-            <strong>{{ s.score }} / {{ s.total }}</strong>
+            <strong>{{ s.score }}</strong>
           </div>
           <div v-if="topScores.length === 0" class="no-scores">
             <p>💬 Aucun score enregistré pour le moment. Sois le premier !</p>
@@ -121,6 +124,21 @@ onMounted(async () => {
   color: #d4af37;
   text-align: center;
 }
+
+/* Mini bloc Nombre de questions */
+.mini-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin: 0.25rem 0 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.mini-info__label { opacity: 0.95; }
+.mini-info__value { color: #d4af37; }
 
 .score-item { 
   display: flex; 
