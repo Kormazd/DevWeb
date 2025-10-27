@@ -175,4 +175,52 @@ input, textarea, select { padding:.6rem .75rem; border-radius:6px; border:1px so
 .answer { display:flex; align-items:center; gap:.5rem }
 .actions { display:flex; gap:.5rem; margin-top:.5rem }
 .btn { padding:.6rem .9rem; border:none; border-radius:6px; background:#d4af37; color:#222; font-weight:700; cursor:pointer }
+
+/* Responsive AdminQuestionEdit */
+@media (max-width: 768px) {
+  .page {
+    padding: 0.75rem 1rem;
+  }
+  
+  .form {
+    gap: 0.6rem;
+  }
+  
+  .preview img {
+    max-width: 100%;
+  }
+  
+  .answer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .answer input[type="checkbox"] {
+    margin-left: 0;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  input, textarea, select {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.65rem;
+  }
+  
+  .answers {
+    gap: 0.4rem;
+  }
+}
 </style>

@@ -164,4 +164,69 @@ onMounted(async () => {
   padding: 2rem;
   color: #d4af37;
 }
+
+/* Responsive ScoresPage */
+@media (max-width: 1024px) {
+  .hero-sides {
+    grid-template-columns: minmax(180px, 0.8fr) 1fr minmax(180px, 0.8fr);
+    column-gap: 1rem;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .header p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 860px) {
+  .page {
+    padding: 1rem 0;
+  }
+  
+  .hero-sides {
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+  
+  .side-image {
+    display: none;
+  }
+  
+  .header {
+    padding: 1.5rem 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .scores {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .header p {
+    font-size: 0.95rem;
+  }
+  
+  .score-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.6rem 0;
+  }
+  
+  .score-item strong {
+    font-size: 1.2rem;
+  }
+}
 </style>
