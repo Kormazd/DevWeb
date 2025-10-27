@@ -133,14 +133,41 @@ body {
   .nav-container {
     flex-direction: column;
     gap: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .nav-brand {
+    font-size: 1.2rem;
   }
   
   .nav-links {
-    gap: 1rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .nav-link {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
   }
   
   .main-content {
-    padding: 1rem 0;
+    padding: 1rem 0 6rem;
+  }
+  
+  .footer {
+    padding: 0.5rem 0;
+    font-size: 0.85rem;
+  }
+  
+  .contact-box {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .contact-right span {
+    margin: 0.5rem;
   }
 }
 </style>

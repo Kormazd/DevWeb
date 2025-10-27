@@ -205,4 +205,80 @@ onMounted(async () => {
   opacity: 0.9;
   font-size: 0.95rem;
 }
+
+/* Responsive HomePage */
+@media (max-width: 1024px) {
+  .hero-sides {
+    grid-template-columns: minmax(180px, 0.8fr) 1fr minmax(180px, 0.8fr);
+    column-gap: 1rem;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .header p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-sides {
+    grid-template-columns: 1fr;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .side-image {
+    display: none;
+  }
+  
+  .header {
+    padding: 1.5rem 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .header p {
+    font-size: 0.95rem;
+  }
+  
+  .btn-start {
+    padding: 0.9rem 1.8rem;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .features {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .feature-card {
+    padding: 1.25rem;
+  }
+  
+  .feature-card h3 {
+    font-size: 1.1rem;
+  }
+  
+  .feature-card p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .quiz-info p {
+    font-size: 0.9rem;
+  }
+}
 </style>

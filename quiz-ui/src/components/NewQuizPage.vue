@@ -125,4 +125,50 @@ input { padding: 0.6rem 0.75rem; border-radius: 6px; border: 1px solid rgba(255,
 .quiz-sides--start { grid-template-columns: minmax(200px, 1fr) minmax(980px, 1120px) minmax(200px, 1fr); }
 .quiz-sides--start .side-image { max-width: 380px; margin-top: 8px; }
 .quiz-sides--start .start-box { margin: 0 auto; }
+
+/* Responsive NewQuizPage */
+@media (max-width: 1024px) {
+  .quiz-sides--start {
+    grid-template-columns: minmax(150px, 0.8fr) 1fr minmax(150px, 0.8fr);
+  }
+}
+
+@media (max-width: 880px) {
+  .quiz-sides--start {
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+    padding: 0 1rem;
+  }
+  
+  .start-box {
+    max-width: 100%;
+    padding: 1rem;
+  }
+  
+  .side-image {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.7rem;
+  }
+  
+  .start-box {
+    padding: 0.875rem;
+  }
+  
+  input {
+    font-size: 0.95rem;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
 </style>

@@ -93,4 +93,78 @@ input { padding:.5rem .6rem; border-radius: 6px; border:1px solid rgba(255,255,2
 .btn { padding:.5rem .7rem; border:none; border-radius:6px; background:#d4af37; color:#222; font-weight:700; cursor:pointer }
 .btn.danger { background:#e74c3c; color:#fff }
 .err { color:#ffb3b3 }
+
+/* Responsive AdminQuestions */
+@media (max-width: 768px) {
+  .page {
+    padding: 0.75rem 1rem;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .tools {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  input {
+    flex: 1;
+    min-width: 150px;
+  }
+  
+  .item {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  
+  .main {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .title {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+  }
+  
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  
+  .btn {
+    flex: 1;
+    min-width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .tools {
+    flex-direction: column;
+  }
+  
+  input {
+    width: 100%;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
 </style>
