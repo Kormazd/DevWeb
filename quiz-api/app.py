@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 60 * 60 * 24 * 7
 CORS(app)
 
-DB_PATH = 'DB_Browser_for_SQLite.db'
+DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'DB_Browser_for_SQLite.db')
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), '..', 'quiz-ui', 'public', 'images')
 MDP_HASH = 'd278077bbfe7285a144d4b5b11adb9cf'
 
@@ -461,14 +461,22 @@ def post_question():
     if not data:
         return jsonify(error="Request body must be a valid JSON"), 400
     try:
+        print(f"Received data: {data}")
         ensure_schema()
-        q = insert_question(question_from_dict(data))
+        q = question_from_dict(data)
+        print(f"Parsed question: {q}")
+        q = insert_question(q)
+        print(f"Inserted question ID: {q.id}")
         return jsonify(to_dict_question(q)), 201
     except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {str(e)}")
         if 'UNIQUE constraint failed' in str(e):
             return jsonify(error="This position is already taken."), 409
         return jsonify(error=f"Database integrity error: {str(e)}"), 500
     except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify(error=f"An unexpected error occurred: {str(e)}"), 500
 
 @app.post('/scores')
