@@ -18,6 +18,8 @@ const currentIndex = ref(0)
 const selectedIndex = ref(null)
 const answersByQuestionId = ref({})
 const score = ref(0)
+const showFeedback = ref(false)
+const correctAnswerIndex = ref(null)
 
 const currentQuestion = computed(() => questions.value[currentIndex.value] || null)
 const total = computed(() => questions.value.length)
@@ -62,14 +64,29 @@ async function load() {
 }
 
 async function nextQuestion() {
-  if (selectedIndex.value == null) return
+  if (selectedIndex.value == null || showFeedback.value) return
   const q = currentQuestion.value
+  
+  // Trouver l'index de la bonne réponse
+  const correctIndex = q?.answers?.findIndex(a => a.isCorrect)
+  correctAnswerIndex.value = correctIndex >= 0 ? correctIndex : null
+  
+  // Afficher le feedback
+  showFeedback.value = true
+  
   const selected = q?.answers?.[selectedIndex.value]
   const isCorrect = Boolean(selected?.isCorrect)
   if (isCorrect) score.value += 1
 
   answersByQuestionId.value[q.id] = { selectedIndex: selectedIndex.value }
+  
+  // Attendre 2.5 secondes avant de passer à la question suivante
+  await new Promise(resolve => setTimeout(resolve, 2500))
+  
+  // Réinitialiser pour la question suivante
+  showFeedback.value = false
   selectedIndex.value = null
+  correctAnswerIndex.value = null
 
   if (currentIndex.value < total.value - 1) {
     currentIndex.value += 1
@@ -152,8 +169,13 @@ function shareProgress() {
                     v-for="(a, idx) in currentQuestion.answers || []"
                     :key="a.id || idx"
                     class="qc__answer"
-                    :class="{ 'qc__answer--selected': selectedIndex === idx }"
+                    :class="{
+                      'qc__answer--selected': selectedIndex === idx,
+                      'qc__answer--correct': showFeedback && correctAnswerIndex === idx,
+                      'qc__answer--incorrect': showFeedback && selectedIndex === idx && idx !== correctAnswerIndex
+                    }"
                     type="button"
+                    :disabled="showFeedback"
                     @click="selectedIndex = idx"
                   >
                     <span class="qc__badge">{{ idx + 1 }}</span>
@@ -161,7 +183,7 @@ function shareProgress() {
                   </button>
                 </div>
                 <div class="actions">
-                  <button class="btn" :disabled="selectedIndex === null || paused" @click="nextQuestion">
+                  <button class="btn" :disabled="selectedIndex === null || paused || showFeedback" @click="nextQuestion">
                     {{ currentIndex < total - 1 ? 'Suivant' : 'Terminer' }}
                   </button>
                 </div>
@@ -210,9 +232,16 @@ function shareProgress() {
 .qc__answers { display: grid; gap: 0.75rem; }
 .qc__answers--grid { grid-template-columns: 1fr; }
 @media (min-width: 820px) { .qc__answers--grid { grid-template-columns: 1fr 1fr; gap: 1rem; } }
-.qc__answer { display: flex; align-items: center; gap: 0.75rem; width: 100%; text-align: left; background: #fff; border: 1px solid #e6e8eb; border-radius: 10px; padding: 0.85rem 1rem; cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease; }
-.qc__answer:hover { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(0,0,0,0.06); }
+.qc__answer { display: flex; align-items: center; gap: 0.75rem; width: 100%; text-align: left; background: #fff; border: 1px solid #e6e8eb; border-radius: 10px; padding: 0.85rem 1rem; cursor: pointer; transition: all 300ms ease; }
+.qc__answer:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(0,0,0,0.06); }
+.qc__answer:disabled { cursor: not-allowed; opacity: 0.7; }
 .qc__answer--selected { border-color: #f1c40f; box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.25); }
+.qc__answer--correct { background: linear-gradient(135deg, #10b981, #059669); border-color: #10b981; color: #fff; animation: correctPulse 0.5s ease; }
+.qc__answer--correct .qc__text { color: #fff; }
+.qc__answer--correct .qc__badge { background: rgba(255, 255, 255, 0.3); color: #fff; }
+.qc__answer--incorrect { background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; color: #fff; animation: incorrectShake 0.5s ease; }
+.qc__answer--incorrect .qc__text { color: #fff; }
+.qc__answer--incorrect .qc__badge { background: rgba(255, 255, 255, 0.3); color: #fff; }
 .qc__badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #2c3e50; color: #fff; font-weight: 700; flex-shrink: 0; }
 .qc__text { color: #2c3e50; }
 
@@ -318,5 +347,18 @@ function shareProgress() {
     font-size: 0.85rem;
     padding: 0.5rem 0.7rem;
   }
+}
+
+/* Animations pour le feedback des réponses */
+@keyframes correctPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+  100% { transform: scale(1); }
+}
+
+@keyframes incorrectShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 </style>
