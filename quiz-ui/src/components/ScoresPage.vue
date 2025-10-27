@@ -46,19 +46,21 @@ onMounted(async () => {
           <p>Découvre les meilleurs scores des joueurs !</p>
         </div>
 
+        <!-- Bloc séparé: Nombre de questions -->
+        <div class="quiz-info" v-if="!loading && quizSize !== null">
+          <span class="quiz-info__label">📚 Nombre de questions</span>
+          <strong class="quiz-info__value">{{ quizSize }}</strong>
+        </div>
+
+        <!-- Bloc séparé: Meilleur score local -->
+        <div class="my-score" v-if="!loading">
+          <span class="my-score__label">🛡️ Ton meilleur score local</span>
+          <strong class="my-score__value">{{ topLocalScore }}</strong>
+        </div>
+
         <div class="scores" v-if="!loading">
           <h2>Top scores</h2>
-          
-          <!-- Mini bloc: Nombre de questions -->
-          <div class="mini-info" v-if="quizSize !== null">
-            <span class="mini-info__label">📚 Nombre de questions</span>
-            <strong class="mini-info__value">{{ quizSize }}</strong>
-          </div>
 
-          <div class="score-item local-score">
-            <span>🛡️ Ton meilleur score local</span>
-            <strong>{{ topLocalScore }}</strong>
-          </div>
           <div class="score-item" v-for="(s, idx) in topScores" :key="idx" :class="{ 'top-score': idx === 0 }">
             <span>
               <span v-if="idx === 0">👑</span>
@@ -125,28 +127,58 @@ onMounted(async () => {
   text-align: center;
 }
 
-/* Mini bloc Nombre de questions */
-.mini-info {
+/* Bloc séparé: Nombre de questions */
+.quiz-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  margin: 0.25rem 0 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
-.mini-info__label { opacity: 0.95; }
-.mini-info__value { color: #d4af37; }
+.quiz-info__label { 
+  opacity: 0.95; 
+  font-size: 1.05rem;
+}
+.quiz-info__value { 
+  color: #d4af37; 
+  font-size: 1.5rem;
+}
+
+/* Bloc séparé: Ton meilleur score local */
+.my-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.my-score__label { 
+  opacity: 0.95; 
+  font-size: 1.05rem;
+  color: #fff;
+}
+.my-score__value { 
+  color: #d4af37; 
+  font-size: 1.5rem;
+}
 
 .score-item { 
   display: flex; 
   align-items: center; 
   justify-content: space-between; 
-  padding: 0.75rem 0; 
+  padding: 0.75rem; 
+  margin: 0 -0.75rem;
   border-top: 1px solid rgba(255,255,255,0.15); 
-  transition: background-color 0.2s ease;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .score-item:first-of-type { 
@@ -157,18 +189,19 @@ onMounted(async () => {
   background-color: rgba(255,255,255,0.05);
 }
 
-.local-score {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(241, 196, 15, 0.1));
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
-  padding: 0.75rem 1rem;
+.top-score {
+  /* Pas de fond gris, juste le texte en doré */
 }
 
-.top-score {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 193, 7, 0.1));
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
-  padding: 0.75rem 1rem;
+.top-score span,
+.top-score strong {
+  color: #d4af37;
+  font-weight: 700;
+}
+
+.top-score:hover {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(241, 196, 15, 0.2)) !important;
+  border-color: rgba(212, 175, 55, 0.3);
 }
 
 .no-scores {
