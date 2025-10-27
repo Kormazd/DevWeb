@@ -10,7 +10,7 @@ import { RouterView } from 'vue-router'
         <router-link to="/" class="nav-brand">Clash Quiz</router-link>
         <div class="nav-links">
         <router-link to="/" class="nav-link">Accueil</router-link>
-        <router-link to="/new-quiz" class="nav-link">Quiz</router-link>
+        <router-link to="/scores" class="nav-link">Score</router-link>
         <router-link to="/admin" class="nav-link">Admin</router-link>
         </div>
       </div>
@@ -19,8 +19,18 @@ import { RouterView } from 'vue-router'
     <main class="main-content">
       <RouterView />
     </main>
-    
-    
+    <footer class="footer contact-footer">
+      <div class="contact-box">
+        <div class="contact-left">
+          <strong>Créateurs</strong>
+          <span>Julien • Tom • Lilian</span>
+        </div>
+        <div class="contact-right">
+          <span>Classe: <em>E4FI_1I</em></span>
+          <span>École: <em>ESIEE Paris</em></span>
+        </div>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -111,38 +121,53 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.main-content {
-  flex: 1;
-  padding: 2rem 0;
-  position: relative;
-  z-index: 2; /* ensure view content is above background */
-}
+.main-content { flex: 1; padding: 2rem 0 5.5rem; position: relative; z-index: 2; }
 
-.footer {
-  background: #2c3e50;
-  color: white;
-  text-align: center;
-  padding: 1rem 0;
-  margin-top: auto;
-}
-
-.footer p {
-  margin: 0;
-}
+.footer { background: rgba(44, 62, 80, 0.9); color: white; padding: 0.75rem 0; position: fixed; left: 0; right: 0; bottom: 0; z-index: 9; backdrop-filter: blur(6px); border-top: 1px solid rgba(255,255,255,0.1); }
+.contact-box { max-width: 1200px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.95rem; }
+.contact-left strong { color: #f5d36b; margin-right: 0.5rem; }
+.contact-right span { margin-left: 1rem; opacity: 0.95; }
 
 /* Responsive */
 @media (max-width: 768px) {
   .nav-container {
     flex-direction: column;
     gap: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .nav-brand {
+    font-size: 1.2rem;
   }
   
   .nav-links {
-    gap: 1rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .nav-link {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
   }
   
   .main-content {
-    padding: 1rem 0;
+    padding: 1rem 0 6rem;
+  }
+  
+  .footer {
+    padding: 0.5rem 0;
+    font-size: 0.85rem;
+  }
+  
+  .contact-box {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .contact-right span {
+    margin: 0.5rem;
   }
 }
 </style>

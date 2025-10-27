@@ -2,10 +2,13 @@ from flask import Flask, request, jsonify, send_from_directory, make_response
 from flask_cors import CORS
 import sqlite3, hashlib, os, json
 from dataclasses import dataclass
+from werkzeug.utils import secure_filename
 from jwt_utils import build_token, decode_token, JwtError
 
 # --- Configuration ---
 app = Flask(__name__)
+# Cache static files by default (7 days)
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 60 * 60 * 24 * 7
 CORS(app)
 
 DB_PATH = 'DB_Browser_for_SQLite.db'
@@ -62,6 +65,16 @@ def init_db():
         ''')
         conn.commit()
 
+def ensure_schema():
+    """Ensure optional columns exist (game, published) on Question."""
+    with get_db_connection() as conn:
+        cols = {r[1] for r in conn.execute('PRAGMA table_info(Question)').fetchall()}
+        if 'game' not in cols:
+            conn.execute("ALTER TABLE Question ADD COLUMN game TEXT")
+        if 'published' not in cols:
+            conn.execute("ALTER TABLE Question ADD COLUMN published BOOLEAN NOT NULL DEFAULT 1")
+        conn.commit()
+
 
 # --- Modèles de Données (Dataclasses) ---
 @dataclass
@@ -78,6 +91,8 @@ class Question:
     text: str | None = None
     position: int | None = None
     image: str | None = None
+    game: str | None = None
+    published: bool | None = True
     id: int | None = None
     answers: list[Answer] | None = None
 
@@ -108,6 +123,8 @@ def question_from_dict(data: dict) -> Question:
         text=data.get('text'),
         position=data.get('position'),
         image=data.get('image'),
+        game=data.get('game'),
+        published=bool(data.get('published', True)),
         answers=answers
     )
 
@@ -119,6 +136,8 @@ def to_dict_question(q: Question):
         "position": q.position,
         "image": q.image,
         "image_url": f"/assets/{q.image}" if q.image else None,
+        "game": q.game,
+        "published": bool(q.published) if q.published is not None else True,
         "answers": [to_dict_answer(a) for a in (q.answers or [])]
     }
 
@@ -133,8 +152,8 @@ def insert_question(q: Question) -> Question:
         cur = conn.cursor()
         if q.position is None:
             q.position = cur.execute('SELECT COALESCE(MAX(position),0)+1 FROM Question').fetchone()[0]
-        cur.execute('INSERT INTO Question (title, text, position, image) VALUES (?, ?, ?, ?)',
-                    (q.title, q.text, q.position, q.image))
+        cur.execute('INSERT INTO Question (title, text, position, image, game, published) VALUES (?, ?, ?, ?, ?, ?)',
+                    (q.title, q.text, q.position, q.image, q.game, int(bool(q.published))))
         q.id = cur.lastrowid
         if q.answers:
             cur.executemany(
@@ -155,10 +174,13 @@ def home():
 
 @app.get('/assets/<path:filename>')
 def serve_asset(filename):
-    """Sert les fichiers statiques (images)."""
+    """Sert les fichiers statiques (images) avec mise en cache côté client."""
     if not os.path.exists(os.path.join(ASSETS_DIR, filename)):
         return jsonify({"error": "Asset not found"}), 404
-    return send_from_directory(ASSETS_DIR, filename)
+    # 7 jours de cache côté client
+    resp = send_from_directory(ASSETS_DIR, filename, cache_timeout=60 * 60 * 24 * 7)
+    resp.headers['Cache-Control'] = 'public, max-age=604800'
+    return resp
 
 @app.get('/quiz-info')
 def quiz_info():
@@ -180,6 +202,14 @@ def quiz_info():
             })
     return jsonify({"size": questions_count, "scores": scores})
 
+@app.get('/health')
+def health():
+    """Basic healthcheck with versions."""
+    return jsonify({
+        "status": "ok",
+        "api_version": "1.0.0"
+    })
+
 @app.get('/scores')
 def get_scores():
     """Récupère la liste des meilleurs scores."""
@@ -187,6 +217,38 @@ def get_scores():
     with get_db_connection() as conn:
         rows = conn.execute('SELECT player, score, total, created_at FROM Score ORDER BY score DESC LIMIT ?', (limit,)).fetchall()
     return jsonify([dict(r) for r in rows])
+
+@app.get('/participations')
+def list_participations():
+    """Admin: list participations based on Score table (player, score, date).
+    Optional filters: from=YYYY-MM-DD, to=YYYY-MM-DD
+    """
+    if not require_auth():
+        return 'Unauthorized', 401
+    date_from = request.args.get('from')
+    date_to = request.args.get('to')
+    with get_db_connection() as conn:
+        query = 'SELECT player, score, total, created_at FROM Score'
+        params = []
+        if date_from and date_to:
+            query += ' WHERE datetime(created_at) BETWEEN datetime(?) AND datetime(?)'
+            params += [date_from, date_to]
+        elif date_from:
+            query += ' WHERE datetime(created_at) >= datetime(?)'
+            params += [date_from]
+        elif date_to:
+            query += ' WHERE datetime(created_at) <= datetime(?)'
+            params += [date_to]
+        query += ' ORDER BY datetime(created_at) DESC'
+        rows = conn.execute(query, params).fetchall()
+        result = [{
+            "playerName": r['player'],
+            "score": r['score'],
+            "total": r['total'],
+            "date": r['created_at'],
+            "game": None
+        } for r in rows]
+    return jsonify(result)
 
 @app.get('/questions')
 def get_questions():
@@ -203,10 +265,141 @@ def get_questions():
         result = []
         for r in rows:
             answers = conn.execute('SELECT * FROM Answer WHERE question_id=? ORDER BY position', (r['id'],)).fetchall()
-            q = Question(r['title'], r['text'], r['position'], r['image'], r['id'],
-                         [Answer(a['text'], bool(a['isCorrect']), a['position'], a['question_id'], a['id']) for a in answers])
+            q = Question(
+                title=r['title'],
+                text=r['text'],
+                position=r['position'],
+                image=r['image'],
+                game=r['game'] if 'game' in r.keys() else None,
+                published=bool(r['published']) if 'published' in r.keys() else True,
+                id=r['id'],
+                answers=[Answer(a['text'], bool(a['isCorrect']), a['position'], a['question_id'], a['id']) for a in answers]
+            )
             result.append(to_dict_question(q))
     return jsonify(result)
+
+@app.get('/questions/export')
+def export_questions():
+    """(Protégé) Export all questions with answers as JSON."""
+    if not require_auth():
+        return 'Unauthorized', 401
+    with get_db_connection() as conn:
+        rows = conn.execute('SELECT * FROM Question ORDER BY position').fetchall()
+        out = []
+        for r in rows:
+            answers = conn.execute('SELECT * FROM Answer WHERE question_id=? ORDER BY position', (r['id'],)).fetchall()
+            out.append({
+                "id": r['id'],
+                "title": r['title'],
+                "text": r['text'],
+                "position": r['position'],
+                "image": r['image'],
+                "answers": [{
+                    "text": a['text'],
+                    "isCorrect": bool(a['isCorrect']),
+                    "position": a['position']
+                } for a in answers]
+            })
+    return jsonify({"questions": out})
+
+@app.post('/questions/import')
+def import_questions():
+    """(Protégé) Import questions from JSON. Optional ?override=true to purge first."""
+    if not require_auth():
+        return 'Unauthorized', 401
+    override = request.args.get('override', 'false').lower() == 'true'
+    payload = request.get_json(silent=True)
+    if not payload:
+        return jsonify(error="Body must be JSON"), 400
+    data = payload.get('questions') if isinstance(payload, dict) else payload
+    if not isinstance(data, list):
+        return jsonify(error="Expected a list of questions or {questions:[...]}") ,400
+    try:
+        ensure_schema()
+        with get_db_connection() as conn:
+            if override:
+                conn.executescript('DELETE FROM Answer; DELETE FROM Question; DELETE FROM sqlite_sequence;')
+            position_used = set()
+            for idx, q in enumerate(data):
+                title = (q.get('title') or '').strip()
+                text = q.get('text')
+                image = q.get('image')
+                pos = q.get('position') or (idx + 1)
+                while pos in position_used:
+                    pos += 1
+                position_used.add(pos)
+                qid = None
+                if 'id' in q and q['id'] is not None:
+                    row = conn.execute('SELECT id FROM Question WHERE id=?', (q['id'],)).fetchone()
+                    if row:
+                        conn.execute('UPDATE Question SET title=?, text=?, position=?, image=? WHERE id=?',
+                                     (title, text, pos, image, q['id']))
+                        qid = q['id']
+                    else:
+                        conn.execute('INSERT INTO Question (id, title, text, position, image) VALUES (?, ?, ?, ?, ?)',
+                                     (q['id'], title, text, pos, image))
+                        qid = q['id']
+                else:
+                    row = conn.execute('SELECT id FROM Question WHERE position=?', (pos,)).fetchone()
+                    if row:
+                        conn.execute('UPDATE Question SET title=?, text=?, image=? WHERE id=?',
+                                     (title, text, image, row['id']))
+                        qid = row['id']
+                    else:
+                        cur = conn.execute('INSERT INTO Question (title, text, position, image) VALUES (?, ?, ?, ?)',
+                                           (title, text, pos, image))
+                        qid = cur.lastrowid
+                conn.execute('DELETE FROM Answer WHERE question_id=?', (qid,))
+                answers = q.get('answers') or []
+                to_insert = [(qid, a.get('text',''), bool(a.get('isCorrect', False)), i+1) for i, a in enumerate(answers)]
+                if to_insert:
+                    conn.executemany('INSERT INTO Answer (question_id, text, isCorrect, position) VALUES (?, ?, ?, ?)', to_insert)
+            conn.commit()
+        return jsonify(message="Import completed", count=len(data)), 200
+    except Exception as e:
+        return jsonify(error=f"Import failed: {str(e)}"), 500
+
+@app.put('/questions/<int:id>/publish')
+def set_publish(id: int):
+    """(Protégé) Set published flag for a question."""
+    if not require_auth():
+        return 'Unauthorized', 401
+    payload = request.get_json(silent=True) or {}
+    if 'published' not in payload:
+        return jsonify(error='published is required'), 400
+    ensure_schema()
+    with get_db_connection() as conn:
+        cur = conn.execute('UPDATE Question SET published=? WHERE id=?', (1 if payload['published'] else 0, id))
+        conn.commit()
+        if cur.rowcount == 0:
+            return jsonify(error='Not found'), 404
+    return ('', 204)
+
+@app.post('/upload-image')
+def upload_image():
+    """(Protégé) Upload image to assets dir and return filename & url."""
+    if not require_auth():
+        return 'Unauthorized', 401
+    if 'file' not in request.files:
+        return jsonify(error='file is required'), 400
+    file = request.files['file']
+    if not file.filename:
+        return jsonify(error='empty filename'), 400
+    name = secure_filename(file.filename)
+    ext = os.path.splitext(name)[1].lower()
+    if ext not in ('.png', '.jpg', '.jpeg', '.webp', '.svg'):
+        return jsonify(error='unsupported extension'), 400
+    os.makedirs(ASSETS_DIR, exist_ok=True)
+    # ensure unique
+    base, _ = os.path.splitext(name)
+    candidate = name
+    i = 1
+    while os.path.exists(os.path.join(ASSETS_DIR, candidate)):
+        candidate = f"{base}_{i}{ext}"
+        i += 1
+    filepath = os.path.join(ASSETS_DIR, candidate)
+    file.save(filepath)
+    return jsonify(filename=candidate, url=f"/assets/{candidate}")
 
 @app.get('/questions/<int:id>')
 def get_question(id):
@@ -216,8 +409,16 @@ def get_question(id):
         if not row:
             return jsonify(error="Not found"), 404
         answers = conn.execute('SELECT * FROM Answer WHERE question_id=?', (id,)).fetchall()
-        q = Question(row['title'], row['text'], row['position'], row['image'], row['id'],
-                     [Answer(a['text'], bool(a['isCorrect']), a['position'], a['question_id'], a['id']) for a in answers])
+        q = Question(
+            title=row['title'],
+            text=row['text'],
+            position=row['position'],
+            image=row['image'],
+            game=row['game'] if 'game' in row.keys() else None,
+            published=bool(row['published']) if 'published' in row.keys() else True,
+            id=row['id'],
+            answers=[Answer(a['text'], bool(a['isCorrect']), a['position'], a['question_id'], a['id']) for a in answers]
+        )
         return jsonify(to_dict_question(q))
 
 @app.get('/participations/<string:player_name>')
@@ -260,6 +461,7 @@ def post_question():
     if not data:
         return jsonify(error="Request body must be a valid JSON"), 400
     try:
+        ensure_schema()
         q = insert_question(question_from_dict(data))
         return jsonify(to_dict_question(q)), 201
     except sqlite3.IntegrityError as e:
@@ -320,13 +522,13 @@ def update_question(id):
 
             if existing_question:
                 # La question existe -> on la met à jour
-                conn.execute('UPDATE Question SET title=?, text=?, position=?, image=? WHERE id=?',
-                             (q.title, q.text, q.position, q.image, id))
+                conn.execute('UPDATE Question SET title=?, text=?, position=?, image=?, game=?, published=? WHERE id=?',
+                             (q.title, q.text, q.position, q.image, q.game, int(bool(q.published)), id))
                 conn.execute('DELETE FROM Answer WHERE question_id=?', (id,))
             else:
                 # La question n'existe pas -> on la crée
-                conn.execute('INSERT INTO Question (id, title, text, position, image) VALUES (?, ?, ?, ?, ?)',
-                             (id, q.title, q.text, q.position, q.image))
+                conn.execute('INSERT INTO Question (id, title, text, position, image, game, published) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                             (id, q.title, q.text, q.position, q.image, q.game, int(bool(q.published))))
                 status_code = 201 # Created (pour une création)
 
             # Dans les deux cas, on insère les nouvelles réponses
@@ -370,6 +572,40 @@ def delete_all_questions():
         conn.commit()
         return ('', 204)
 
+@app.post('/questions/reorder')
+def reorder_questions():
+    """(Protégé) Réordonne les questions selon une liste d'IDs.
+    Body: { "ids": [id1, id2, ...] }
+    Met à jour atomiquement les positions pour éviter les collisions de contrainte UNIQUE.
+    """
+    if not require_auth():
+        return 'Unauthorized', 401
+    data = request.get_json(silent=True) or {}
+    ids = data.get('ids')
+    if not isinstance(ids, list) or not all(isinstance(x, int) for x in ids):
+        return jsonify(error='Body must include integer array "ids"'), 400
+    try:
+        with get_db_connection() as conn:
+            # Décale toutes les positions pour éviter les collisions UNIQUE
+            conn.execute('UPDATE Question SET position = position + 1000')
+            # Applique les nouvelles positions pour les IDs fournis
+            for idx, qid in enumerate(ids, start=1):
+                conn.execute('UPDATE Question SET position=? WHERE id=?', (idx, qid))
+            # Place les questions restantes (non listées) après
+            placeholders = ','.join('?' for _ in ids) or 'NULL'
+            remaining = conn.execute(
+                f'SELECT id FROM Question WHERE id NOT IN ({placeholders}) ORDER BY position',
+                ids if ids else []
+            ).fetchall()
+            next_pos = len(ids) + 1
+            for r in remaining:
+                conn.execute('UPDATE Question SET position=? WHERE id=?', (next_pos, r['id']))
+                next_pos += 1
+            conn.commit()
+        return jsonify(message='Reordered', count=len(ids)), 200
+    except Exception as e:
+        return jsonify(error=f'Reorder failed: {str(e)}'), 500
+
 
 @app.delete('/participations/all')
 def delete_all_participations():
@@ -384,4 +620,5 @@ def delete_all_participations():
 # --- Démarrage de l'application ---
 if __name__ == "__main__":
     init_db()
+    ensure_schema()
     app.run(port=5001, debug=True)

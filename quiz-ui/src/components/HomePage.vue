@@ -1,45 +1,78 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import Storage from '@/services/ParticipationStorageService'
 import QuizApi from '@/services/QuizApiService'
 
-const topLocalScore = ref(0)
 const quizSize = ref(null)
-const topScores = ref([])
 const loading = ref(true)
+const leftImg = ref('')
+const rightImg = ref('')
+
+// Prefer optimized assets when available, fallback to originals
+const optimizedModules = import.meta.glob('@/assets-optimized/*.{webp}', { eager: true, import: 'default' })
+const baseModules = import.meta.glob('@/assets/*.{png,jpg,jpeg,webp,svg}', { eager: true, import: 'default' })
+const assetFiles = Object.values(Object.keys(optimizedModules).length ? optimizedModules : baseModules)
+function setRandomSides() {
+  if (!assetFiles || assetFiles.length === 0) return
+
+  const lastLeft = localStorage.getItem('home_left_img')
+  const lastRight = localStorage.getItem('home_right_img')
+
+  let pool = assetFiles.filter(u => u !== lastLeft && u !== lastRight)
+  if (pool.length < 2) {
+    pool = [...assetFiles]
+  }
+
+  const randIndex = (max) => Math.floor(Math.random() * max)
+  let l = pool[randIndex(pool.length)]
+
+  let remaining = pool.filter(u => u !== l)
+  if (remaining.length === 0) {
+    remaining = assetFiles.filter(u => u !== l)
+  }
+  let r = remaining[randIndex(remaining.length)]
+
+  leftImg.value = l
+  rightImg.value = r
+  localStorage.setItem('home_left_img', l)
+  localStorage.setItem('home_right_img', r)
+}
 
 onMounted(async () => {
-  topLocalScore.value = Math.max(Number(Storage.getScore() || 0), 0)
-  
-  // Un seul appel API au lieu de deux
   const info = await QuizApi.getQuizInfo()
   quizSize.value = info?.data?.size ?? null
-  topScores.value = Array.isArray(info?.data?.scores) ? info.data.scores : []
   loading.value = false
+  setRandomSides()
 })
 </script>
 
 <template>
   <section class="page">
-    <div class="header">
+    
+    <div class="hero-sides">
+      <img class="side-image left" :src="leftImg" alt="illustration gauche" loading="lazy" decoding="async" fetchpriority="low"/>
+      <div class="header">
       <h1>🏰 Quiz Clash Royale & Clash of Clans</h1>
       <p>Teste tes connaissances sur les jeux Supercell !</p>
+      <div class="quiz-info" v-if="!loading && quizSize !== null">
+        <p>📊 {{ quizSize }} questions t'attendent</p>
+      </div>
       <router-link to="/new-quiz" class="btn-start">🎮 Commencer le quiz</router-link>
     </div>
+      <img class="side-image right" :src="rightImg" alt="illustration droite" loading="lazy" decoding="async" fetchpriority="low"/>
+    </div>
     
-    <div class="scores">
-      <h2>Top scores</h2>
-      <div class="score-item">
-        <span>Meilleur score local</span>
-        <strong>{{ topLocalScore }}</strong>
+    <div class="features">
+      <div class="feature-card">
+        <h3>🎯 Questions variées</h3>
+        <p>Clash Royale et Clash of Clans</p>
       </div>
-      <div class="score-item" v-if="quizSize !== null">
-        <span>Nombre de questions</span>
-        <strong>{{ quizSize }}</strong>
+      <div class="feature-card">
+        <h3>🏆 Classements</h3>
+        <p>Compare tes scores avec les autres</p>
       </div>
-      <div class="score-item" v-for="(s, idx) in topScores" :key="idx">
-        <span>{{ s.playerName }}</span>
-        <strong>{{ s.score }} / {{ s.total }}</strong>
+      <div class="feature-card">
+        <h3>🎨 Design immersif</h3>
+        <p>Interface médiévale et animations</p>
       </div>
     </div>
   </section>
@@ -48,14 +81,24 @@ onMounted(async () => {
 <style scoped>
 .page { 
   color: #fff; 
-  max-width: 960px; 
-  margin: 0 auto; 
-  padding: 2rem 1rem; 
+  max-width: none; 
+  width: 100%; 
+  margin: 0; 
+  padding: 2rem 0; 
 }
+
+/* Images latérales accueil */
+.hero-sides { width: min(1700px, 98vw); margin: 0 auto 2rem; display: grid; grid-template-columns: minmax(260px, 1fr) minmax(780px, 880px) minmax(260px, 1fr); column-gap: 2rem; align-items: start; }
+.side-image { width: 100%; max-width: 560px; height: clamp(300px, 36vw, 520px); object-fit: contain; filter: drop-shadow(0 12px 30px rgba(0,0,0,0.4)); opacity: 0.98; transition: transform .25s ease, opacity .25s ease; margin-top: 24px; }
+.side-image.left { justify-self: end; margin-right: 0; }
+.side-image.right { justify-self: start; margin-left: 0; }
+.side-image:hover { transform: translateY(-4px) scale(1.02); opacity: 1; }
+@media (max-width: 1000px) { .side-image { max-width: 360px; height: clamp(220px, 40vw, 360px); } }
+@media (max-width: 860px) { .hero-sides { grid-template-columns: 1fr; } .side-image { display: none; } }
 
 .header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   background: rgba(0,0,0,0.35);
   border-radius: 8px;
   padding: 2rem 1.5rem;
@@ -69,53 +112,173 @@ onMounted(async () => {
 }
 
 .header p {
-  margin: 0 0 1.5rem;
+  margin: 0 0 1rem;
   opacity: 0.9;
   font-size: 1.1rem;
 }
 
+.quiz-info {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  background: rgba(212, 175, 55, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.quiz-info p {
+  margin: 0;
+  color: #d4af37;
+  font-weight: 600;
+}
+
 .btn-start {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #d4af37, #f1c40f);
-  color: #222;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 700;
+  border: none;
+  border-radius: 15px;
+  font-family: var(--font-body);
   font-size: 1.1rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: var(--transition-medium);
+  box-shadow: var(--shadow-button);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.btn-start::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: var(--transition-medium);
+}
+
+.btn-start:hover::before {
+  left: 100%;
 }
 
 .btn-start:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.feature-card {
+  background: rgba(0,0,0,0.35);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-.scores { 
-  position: relative; 
-  z-index: 3; 
-  background: rgba(0,0,0,0.35); 
-  border-radius: 8px; 
-  padding: 1rem 1.25rem; 
-}
-
-.scores h2 { 
-  margin: 0 0 0.75rem; 
+.feature-card h3 {
+  margin: 0 0 0.5rem;
   color: #d4af37;
+  font-size: 1.2rem;
 }
 
-.score-item { 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  padding: 0.5rem 0; 
-  border-top: 1px solid rgba(255,255,255,0.15); 
+.feature-card p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.95rem;
 }
 
-.score-item:first-of-type { 
-  border-top: 0; 
+/* Responsive HomePage */
+@media (max-width: 1024px) {
+  .hero-sides {
+    grid-template-columns: minmax(180px, 0.8fr) 1fr minmax(180px, 0.8fr);
+    column-gap: 1rem;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .header p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-sides {
+    grid-template-columns: 1fr;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .side-image {
+    display: none;
+  }
+  
+  .header {
+    padding: 1.5rem 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .header p {
+    font-size: 0.95rem;
+  }
+  
+  .btn-start {
+    padding: 0.9rem 1.8rem;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .features {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .feature-card {
+    padding: 1.25rem;
+  }
+  
+  .feature-card h3 {
+    font-size: 1.1rem;
+  }
+  
+  .feature-card p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .quiz-info p {
+    font-size: 0.9rem;
+  }
 }
 </style>
-
-

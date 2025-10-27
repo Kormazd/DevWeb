@@ -1,4 +1,4 @@
-// Quiz Supercell - JavaScript pour l'interactivité
+﻿// Quiz Supercell - JavaScript pour l'interactivitÃ©
 class SupercellQuiz {
     constructor() {
         this.currentQuestion = 0;
@@ -13,7 +13,7 @@ class SupercellQuiz {
     }
     
     initializeElements() {
-        // Écrans
+        // Ã‰crans
         this.welcomeScreen = document.getElementById('welcome-screen');
         this.quizScreen = document.getElementById('quiz-screen');
         this.resultsScreen = document.getElementById('results-screen');
@@ -24,7 +24,7 @@ class SupercellQuiz {
         this.restartBtn = document.getElementById('restart-quiz');
         this.shareBtn = document.getElementById('share-results');
         
-        // Éléments du quiz
+        // Ã‰lÃ©ments du quiz
         this.questionText = document.getElementById('question-text');
         this.questionCategory = document.getElementById('question-category');
         this.answersContainer = document.getElementById('answers-container');
@@ -33,7 +33,7 @@ class SupercellQuiz {
         this.currentScoreSpan = document.getElementById('current-score');
         this.progressFill = document.querySelector('.progress-fill');
         
-        // Éléments des résultats
+        // Ã‰lÃ©ments des rÃ©sultats
         this.finalScore = document.getElementById('final-score');
         this.finalPoints = document.getElementById('final-points');
         this.correctAnswers = document.getElementById('correct-answers');
@@ -53,18 +53,18 @@ class SupercellQuiz {
             // On appelle la route GET /questions de notre backend
             const response = await api.getQuestions();
             
-            // Les questions viennent maintenant de la vraie base de données !
+            // Les questions viennent maintenant de la vraie base de donnÃ©es !
             this.questions = response.data; 
     
-            // On met à jour le nombre total de questions
+            // On met Ã  jour le nombre total de questions
             this.totalQuestionsSpan.textContent = this.questions.length;
             
-            console.log("Questions chargées depuis l'API avec succès !");
+            console.log("Questions chargÃ©es depuis l'API avec succÃ¨s !");
     
         } catch (error) {
             console.error("Erreur lors du chargement des questions depuis l'API:", error);
-            // Affiche un message d'erreur à l'utilisateur
-            this.questionText.textContent = "Impossible de charger les questions. Veuillez vérifier que le serveur backend est bien démarré et rafraîchir la page.";
+            // Affiche un message d'erreur Ã  l'utilisateur
+            this.questionText.textContent = "Impossible de charger les questions. Veuillez vÃ©rifier que le serveur backend est bien dÃ©marrÃ© et rafraÃ®chir la page.";
             this.answersContainer.innerHTML = '';
         }
     }
@@ -84,7 +84,7 @@ class SupercellQuiz {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         screen.classList.add('active');
         
-        // Animation d'entrée
+        // Animation d'entrÃ©e
         screen.style.animation = 'none';
         screen.offsetHeight; // Trigger reflow
         screen.style.animation = 'fadeInUp 0.5s ease';
@@ -98,7 +98,7 @@ class SupercellQuiz {
         this.questionCategory.textContent = question.category;
         this.currentQuestionSpan.textContent = this.currentQuestion + 1;
         
-        // Créer les options de réponse
+        // CrÃ©er les options de rÃ©ponse
         this.answersContainer.innerHTML = '';
         question.answers.forEach((answer, index) => {
             const answerElement = document.createElement('div');
@@ -119,10 +119,10 @@ class SupercellQuiz {
         const question = this.questions[this.currentQuestion];
         const answerOptions = document.querySelectorAll('.answer-option');
         
-        // Marquer la réponse sélectionnée
+        // Marquer la rÃ©ponse sÃ©lectionnÃ©e
         answerOptions[selectedIndex].classList.add('selected');
         
-        // Révéler la bonne réponse après un délai
+        // RÃ©vÃ©ler la bonne rÃ©ponse aprÃ¨s un dÃ©lai
         setTimeout(() => {
             answerOptions.forEach((option, index) => {
                 if (index === question.correct) {
@@ -135,19 +135,24 @@ class SupercellQuiz {
             // Calculer le score
             if (selectedIndex === question.correct) {
                 this.score += 100;
-                this.showFeedback('Correct ! 🎉', 'success');
+                this.showFeedback('Correct ! ðŸŽ‰', 'success');
             } else {
-                this.showFeedback('Incorrect 😔', 'error');
+                this.showFeedback('Incorrect ðŸ˜”', 'error');
             }
             
             this.userAnswers.push(selectedIndex);
             this.updateScore();
-            this.nextBtn.disabled = false;
+            const isLast = this.currentQuestion === this.questions.length - 1;
+            const baseLabel = isLast ? 'Voir les résultats' : 'Question suivante';
+            const correctCount = this.userAnswers.filter((ans, idx) => ans === this.questions[idx].correct).length;
+            const recap = isLast ? ` — ${correctCount}/${this.questions.length}, ${this.score} pts` : ` — ${this.score} pts`;
+            this.nextBtn.textContent = baseLabel + recap;
+            const isLast = this.currentQuestion === this.questions.length - 1;\n            const baseLabel = isLast ? 'Voir les résultats' : 'Question suivante';\n            this.nextBtn.textContent = ${baseLabel} (score: );\n            this.nextBtn.disabled = false;
         }, 500);
     }
     
     showFeedback(message, type) {
-        // Créer un élément de feedback temporaire
+        // CrÃ©er un Ã©lÃ©ment de feedback temporaire
         const feedback = document.createElement('div');
         feedback.className = `feedback feedback-${type}`;
         feedback.textContent = message;
@@ -210,7 +215,7 @@ class SupercellQuiz {
         this.correctAnswers.textContent = `${correctAnswersCount}/${this.questions.length}`;
         this.accuracy.textContent = `${accuracyPercentage}%`;
         
-        // Déterminer le badge d'achievement
+        // DÃ©terminer le badge d'achievement
         this.updateAchievementBadge(accuracyPercentage);
         
         this.showScreen(this.resultsScreen);
@@ -228,19 +233,19 @@ class SupercellQuiz {
         const badgeText = this.achievementBadge.querySelector('.badge-text');
         
         if (accuracy >= 90) {
-            badgeIcon.textContent = '👑';
+            badgeIcon.textContent = 'ðŸ‘‘';
             badgeText.textContent = 'Roi Supercell !';
             this.achievementBadge.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
         } else if (accuracy >= 70) {
-            badgeIcon.textContent = '🏆';
+            badgeIcon.textContent = 'ðŸ†';
             badgeText.textContent = 'Champion Supercell !';
             this.achievementBadge.style.background = 'linear-gradient(135deg, #C0C0C0, #87CEEB)';
         } else if (accuracy >= 50) {
-            badgeIcon.textContent = '🎖️';
+            badgeIcon.textContent = 'ðŸŽ–ï¸';
             badgeText.textContent = 'Guerrier Supercell !';
             this.achievementBadge.style.background = 'linear-gradient(135deg, #CD7F32, #D2691E)';
         } else {
-            badgeIcon.textContent = '🎮';
+            badgeIcon.textContent = 'ðŸŽ®';
             badgeText.textContent = 'Apprenti Supercell !';
             this.achievementBadge.style.background = 'linear-gradient(135deg, #696969, #808080)';
         }
@@ -255,22 +260,22 @@ class SupercellQuiz {
             answer === this.questions[index].correct
         ).length;
         
-        const shareText = `🎮 J'ai terminé le Quiz Supercell ! 🎮\n\n` +
-                         `📊 Score: ${correctAnswersCount}/${this.questions.length}\n` +
-                         `⭐ Points: ${this.score}\n` +
-                         `🎯 Précision: ${Math.round((correctAnswersCount / this.questions.length) * 100)}%\n\n` +
+        const shareText = `ðŸŽ® J'ai terminÃ© le Quiz Supercell ! ðŸŽ®\n\n` +
+                         `ðŸ“Š Score: ${correctAnswersCount}/${this.questions.length}\n` +
+                         `â­ Points: ${this.score}\n` +
+                         `ðŸŽ¯ PrÃ©cision: ${Math.round((correctAnswersCount / this.questions.length) * 100)}%\n\n` +
                          `Testez vos connaissances sur l'univers Supercell !`;
         
         if (navigator.share) {
             navigator.share({
-                title: 'Quiz Supercell - Mes résultats',
+                title: 'Quiz Supercell - Mes rÃ©sultats',
                 text: shareText,
                 url: window.location.href
             });
         } else {
             // Fallback pour les navigateurs qui ne supportent pas l'API de partage
             navigator.clipboard.writeText(shareText).then(() => {
-                this.showFeedback('Résultats copiés ! 📋', 'success');
+                this.showFeedback('RÃ©sultats copiÃ©s ! ðŸ“‹', 'success');
             }).catch(() => {
                 // Fallback ultime
                 const textarea = document.createElement('textarea');
@@ -279,13 +284,13 @@ class SupercellQuiz {
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                this.showFeedback('Résultats copiés ! 📋', 'success');
+                this.showFeedback('RÃ©sultats copiÃ©s ! ðŸ“‹', 'success');
             });
         }
     }
 }
 
-// Styles CSS supplémentaires pour les animations
+// Styles CSS supplÃ©mentaires pour les animations
 const additionalStyles = `
     @keyframes feedbackPop {
         0% {
@@ -308,19 +313,19 @@ const additionalStyles = `
     }
 `;
 
-// Ajouter les styles supplémentaires
+// Ajouter les styles supplÃ©mentaires
 const styleSheet = document.createElement('style');
 styleSheet.textContent = additionalStyles;
 document.head.appendChild(styleSheet);
 
-// Initialiser le quiz quand le DOM est chargé
+// Initialiser le quiz quand le DOM est chargÃ©
 document.addEventListener('DOMContentLoaded', () => {
     new SupercellQuiz();
 });
 
-// Easter eggs et effets spéciaux
+// Easter eggs et effets spÃ©ciaux
 document.addEventListener('keydown', (e) => {
-    // Konami Code: ↑↑↓↓←→←→BA
+    // Konami Code: â†‘â†‘â†“â†“â†â†’â†â†’BA
     const konamiCode = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
     if (!window.konamiSequence) window.konamiSequence = [];
     
@@ -328,7 +333,7 @@ document.addEventListener('keydown', (e) => {
     window.konamiSequence = window.konamiSequence.slice(-10);
     
     if (window.konamiSequence.join(',') === konamiCode.join(',')) {
-        // Effet spécial Konami Code
+        // Effet spÃ©cial Konami Code
         document.body.style.animation = 'rainbow 2s ease infinite';
         setTimeout(() => {
             document.body.style.animation = '';
@@ -350,3 +355,5 @@ const rainbowStyle = `
 const rainbowSheet = document.createElement('style');
 rainbowSheet.textContent = rainbowStyle;
 document.head.appendChild(rainbowSheet);
+
+
