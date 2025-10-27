@@ -58,9 +58,34 @@ async function save(){
   error.value = ''
   saving.value = true
   try{
+    // Validation: titre requis
+    if(!form.value.title?.trim()) {
+      throw new Error('Le titre est requis')
+    }
+    
+    // Validation: au moins une réponse doit être remplie
+    const validAnswers = form.value.answers.filter(a => a.text?.trim())
+    if(validAnswers.length === 0) {
+      throw new Error('Au moins une réponse est requise')
+    }
+    
+    // Validation: exactement une réponse correcte
+    const correctAnswers = validAnswers.filter(a => a.isCorrect)
+    if(correctAnswers.length !== 1) {
+      throw new Error('Exactement une réponse doit être marquée comme correcte')
+    }
+    
     await uploadIfNeeded()
-    const payload = { ...form.value }
-    delete payload.__file
+    const payload = { 
+      title: form.value.title.trim(),
+      text: form.value.text?.trim() || null,
+      position: form.value.position || null,
+      image: form.value.image?.trim() || null,
+      game: form.value.game?.trim() || null,
+      published: form.value.published !== false,
+      answers: validAnswers
+    }
+    
     if(isNew.value){
       const { status, data } = await QuizApi.postQuestion(payload)
       if(status>=200 && status<300){ router.replace({ name:'AdminQuestions' }) } else { throw new Error(data?.error || 'Erreur création') }
@@ -69,7 +94,10 @@ async function save(){
       if(!(status>=200 && status<300)){ throw new Error(data?.error || 'Erreur sauvegarde') }
       router.replace({ name:'AdminQuestions' })
     }
-  }catch(e){ error.value = e.message }
+  }catch(e){ 
+    error.value = e.message || String(e)
+    console.error('Erreur lors de la sauvegarde:', e)
+  }
   finally{ saving.value = false }
 }
 

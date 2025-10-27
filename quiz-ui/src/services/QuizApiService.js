@@ -50,7 +50,7 @@ const quizApiService = {
   uploadImage(file) {
     const form = new FormData()
     form.append('file', file)
-    return api.post('/upload-image', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+    return api.post('/upload-image', form)
       .then(r => ({ status: r.status, data: r.data }))
       .catch(e => ({ status: e?.response?.status || 500, data: e?.response?.data || { error: 'Upload failed' } }))
   },
