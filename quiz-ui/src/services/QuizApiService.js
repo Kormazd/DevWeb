@@ -17,9 +17,14 @@ const quizApiService = {
   getScores(limit = 10) { return request('get', `/scores?limit=${encodeURIComponent(limit)}`) },
 
   // Questions
-  getQuestions(params = {}) {
+  async getQuestions(params = {}) {
     const query = typeof params.position === 'number' ? `?position=${params.position}` : ''
-    return request('get', `/questions${query}`)
+    const res = await request('get', `/questions${query}`)
+    if (res.status >= 200 && res.status < 300) {
+      const arr = Array.isArray(res.data) ? res.data : (res.data?.items || [])
+      return { status: res.status, data: arr }
+    }
+    return res
   },
   getQuestion(id) { return request('get', `/questions/${id}`) },
   postQuestion(question) { return request('post', '/questions', question) },
