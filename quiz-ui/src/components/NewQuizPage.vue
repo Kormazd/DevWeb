@@ -2,23 +2,16 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Storage from '@/services/ParticipationStorageService'
-import megaUrl from '@/assets/Mega_Knight_03.png'
-import princeUrl from '@/assets/Prince_03.png'
-import reineUrl from '@/assets/Reine_archer_pekka.png'
+import { pickTwoRandom } from '@/data/sideImages'
 
 const router = useRouter()
 const playerName = ref('')
 
 
-// Images latérales aléatoires (packagées par Vite)
-const assetFiles = [megaUrl, princeUrl, reineUrl]
 const leftSide = ref('')
 const rightSide = ref('')
 function setRandomSides() {
-  if (!assetFiles.length) return
-  const pick = () => assetFiles[Math.floor(Math.random() * assetFiles.length)]
-  let l = pick(); let r = pick(); let guard = 0
-  while (r === l && guard < 5) { r = pick(); guard++ }
+  const [l, r] = pickTwoRandom(leftSide.value, rightSide.value)
   leftSide.value = l
   rightSide.value = r
 }

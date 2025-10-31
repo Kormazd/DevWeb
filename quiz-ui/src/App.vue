@@ -35,11 +35,11 @@ import { RouterView } from 'vue-router'
 </template>
 
 <style>
-@import '/static/css/style.css';
+@import './assets/main.css';
 
 @font-face {
   font-family: 'ClashRegular';
-  src: url('./assets/Fonts/Clash_Regular.woff2') format('woff2');
+  src: url('/fonts/Clash_Regular.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;

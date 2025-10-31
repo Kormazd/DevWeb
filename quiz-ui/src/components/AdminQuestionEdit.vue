@@ -2,6 +2,7 @@
 import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QuizApi from '@/services/QuizApiService'
+import { imageUrl } from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,8 +14,6 @@ const form = ref({ title:'', text:'', game:'', position: null, image:'', publish
 const loading = ref(!isNew.value)
 const saving = ref(false)
 const error = ref('')
-const previewUrl = ref('')
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5001'
 
 onMounted(async () => {
   if(!isNew.value){
@@ -26,7 +25,6 @@ onMounted(async () => {
         answers: (data.answers || []).map(a => ({ text: a.text || '', isCorrect: !!a.isCorrect }))
       }
       while(form.value.answers.length < 4) form.value.answers.push({ text:'', isCorrect:false })
-      previewUrl.value = data.image_url || ''
     } else { error.value = data?.error || 'Chargement impossible' }
   }
   loading.value = false
@@ -36,23 +34,20 @@ function ensureSingleCorrect(idx){
   form.value.answers = form.value.answers.map((a,i) => ({ ...a, isCorrect: i===idx }))
 }
 
-function onFileChange(e){
-  const f = e.target.files?.[0]
+function onPickFile(e){
+  const f = e?.target?.files?.[0]
   if(!f) return
-  previewUrl.value = URL.createObjectURL(f)
-  form.value.__file = f
-}
-
-async function uploadIfNeeded(){
-  if(form.value.__file){
-    const { status, data } = await QuizApi.uploadImage(form.value.__file)
-    if(status>=200 && status<300){
-      form.value.image = data.filename
-    } else {
-      throw new Error(data?.error || 'Upload échoué')
+  const reader = new FileReader()
+  reader.onload = () => {
+    const dataUrl = String(reader.result || '')
+    if (dataUrl.startsWith('data:')) {
+      form.value.image = dataUrl
     }
   }
+  reader.readAsDataURL(f)
 }
+const fileInputRef = ref(null)
+function triggerPickFile(){ fileInputRef?.value?.click?.() }
 
 async function save(){
   error.value = ''
@@ -75,7 +70,6 @@ async function save(){
       throw new Error('Exactement une réponse doit être marquée comme correcte')
     }
     
-    await uploadIfNeeded()
     const payload = { 
       title: form.value.title.trim(),
       text: form.value.text?.trim() || null,
@@ -135,10 +129,18 @@ function cancel(){ router.back() }
       </div>
       <div class="row">
         <label>Image</label>
-        <input type="file" accept="image/*" @change="onFileChange" />
-        <input v-model="form.image" placeholder="Nom de fichier (assets)" />
-        <div v-if="previewUrl || form.image" class="preview">
-          <img :src="previewUrl || (form.image ? apiBase + '/assets/' + form.image : '')" alt="aperçu" />
+        <input v-model="form.image" placeholder="Ex: Pekka_12.png ou /images/Prince_03.png" />
+        <div class="file-controls">
+          <input ref="fileInputRef" class="file-input-hidden" type="file" accept="image/*" @change="onPickFile" />
+          <button type="button" class="btn btn-file" @click="triggerPickFile">Choisir une image</button>
+          <small v-if="form.image && String(form.image).startsWith('data:')" class="hint">Image locale chargée</small>
+        </div>
+        <small class="hint">
+          💡 Les images doivent être dans <code>public/images/</code>. 
+          Saisissez simplement le nom du fichier (ex: "Pekka_12.png") ou le chemin complet (ex: "/images/Pekka_12.png").
+        </small>
+        <div v-if="form.image" class="preview">
+          <img :src="imageUrl(form.image)" :alt="form.title || 'Aperçu'" @error="$event.target.style.display='none'" />
         </div>
       </div>
       <div class="row">
@@ -169,6 +171,11 @@ function cancel(){ router.back() }
 .row { display:grid; gap:.25rem }
 label { font-weight:600 }
 input, textarea, select { padding:.6rem .75rem; border-radius:6px; border:1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.9); color:#222 }
+.hint { display:block; margin-top:.25rem; font-size:.85rem; opacity:.8; line-height:1.4 }
+.hint code { background:rgba(0,0,0,0.3); padding:.125rem .3rem; border-radius:3px; font-family:monospace }
+.file-controls { display:flex; align-items:center; gap:.5rem; margin-top:.35rem }
+.file-input-hidden { display:none }
+.btn-file { background:#d4af37; color:#222; font-weight:700; border:none; border-radius:6px; padding:.45rem .75rem; cursor:pointer }
 .preview { margin-top:.5rem }
 .preview img { max-width: 260px; height:auto; border-radius:6px; box-shadow: 0 6px 20px rgba(0,0,0,0.35) }
 .answers { margin-top:.5rem; display:grid; gap:.5rem }

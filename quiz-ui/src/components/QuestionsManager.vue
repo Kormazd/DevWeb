@@ -79,7 +79,9 @@ async function saveOrder() {
       <div class="actions">
         <button class="btn" :disabled="saving" @click="saveOrder">Enregistrer l'ordre</button>
       </div>
-    </div>
+        <!-- Espace bas pour permettre un scroll supplémentaire au-dessus du footer -->
+        <div class="bottom-spacer"></div>
+      </div>
   </section>
 </template>
 
@@ -87,7 +89,7 @@ async function saveOrder() {
 .page {
   max-width: 960px;
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 1rem 2rem 6rem; /* extra bas pour éviter le chevauchement du footer */
   color: #fff;
 }
 .err { color: #ffb3b3; }
@@ -98,4 +100,5 @@ async function saveOrder() {
 .handle { cursor: grab; user-select: none; opacity: 0.85; }
 .actions { margin-top: 0.75rem; }
 .btn { padding: 0.6rem 0.9rem; border: none; border-radius: 6px; background: #d4af37; color: #222; font-weight: 700; cursor: pointer; }
+.bottom-spacer { height: 200px; }
 </style>

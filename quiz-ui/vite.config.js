@@ -7,6 +7,16 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   server: {
     port: 3000,
+    proxy: {
+      '/uploads': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
+      '/assets': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
+    },
   },
   plugins: [
     vue(),

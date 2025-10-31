@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import hashlib
+import os
+from werkzeug.utils import secure_filename
 from jwt_utils import build_token, decode_token, JwtError
 from questions import (
-    Question,
     question_from_dict,
     question_to_dict,
     insert_question,
@@ -33,6 +34,18 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 ADMIN_PASSWORD = "iloveflask"
 LEGACY_ADMIN_PASSWORD_MD5 = "d278077bbfe7285a144d4b5b11adb9cf"
 
+# Configuration pour l'upload d'images
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+
+# Créer le dossier uploads s'il n'existe pas
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 # ===============================================================
 # ============================ GET ==============================
@@ -40,7 +53,7 @@ LEGACY_ADMIN_PASSWORD_MD5 = "d278077bbfe7285a144d4b5b11adb9cf"
 
 @app.get("/")
 def home():
-    return "Quiz API - Version Flask"
+    return "Quiz API - Quiz Clash Royale & Clash of Clans"
 
 
 @app.get("/quiz-info")
@@ -66,13 +79,19 @@ def get_questions():
         if not q:
             return {}, 404
         data = question_to_dict(q)
-        data["possibleAnswers"] = list_answers_for_question(q.id)
+        # Récupérer les réponses triées par position
+        answers = list_answers_for_question(q.id)
+        data["possibleAnswers"] = answers
+        data["answers"] = answers  # Pour le frontend quiz
         return data, 200
 
     questions = []
     for q in list_questions():
         item = question_to_dict(q)
-        item["possibleAnswers"] = list_answers_for_question(q.id)
+        # Récupérer les réponses triées par position
+        answers = list_answers_for_question(q.id)
+        item["possibleAnswers"] = answers
+        item["answers"] = answers  # Pour le frontend quiz
         questions.append(item)
 
     return {"items": questions}, 200
@@ -85,7 +104,10 @@ def get_question_by_id_route(qid: int):
     if not q:
         return {}, 404
     data = question_to_dict(q)
-    data["possibleAnswers"] = list_answers_for_question(q.id)
+    # Récupérer les réponses triées par position
+    answers = list_answers_for_question(q.id)
+    data["possibleAnswers"] = answers
+    data["answers"] = answers  # Pour le frontend quiz
     return data, 200
 
 @app.get("/questions/admin")
@@ -98,7 +120,10 @@ def get_questions_admin():
     result = []
     for q in list_questions():
         q_dict = question_to_dict(q)
-        q_dict["possibleAnswers"] = list_answers_for_question(q.id)
+        # Récupérer les réponses triées par position
+        answers = list_answers_for_question(q.id)
+        q_dict["possibleAnswers"] = answers
+        q_dict["answers"] = answers  # Pour cohérence
         result.append(q_dict)
     return result, 200
 
@@ -109,6 +134,18 @@ def export_stub():
     Stub endpoint to satisfy frontend export calls.
     """
     return ("", 204)
+
+
+@app.get("/assets/<path:filename>")
+def serve_asset(filename):
+    """Sert les fichiers images uploadés."""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
+@app.get("/uploads/<path:filename>")
+def serve_upload(filename):
+    """Sert les fichiers uploadés (alias pour /assets/)."""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # ===============================================================
 # ============================ POST =============================
@@ -139,13 +176,52 @@ def post_question():
 
     payload = request.get_json() or {}
     q = question_from_dict(payload)
-    possible_answers = payload.get("possibleAnswers")
+    possible_answers = payload.get("possibleAnswers") or payload.get("answers")
 
     created = insert_question(q, possible_answers)
 
     data = question_to_dict(created)
-    data["possibleAnswers"] = list_answers_for_question(created.id)
+    answers = list_answers_for_question(created.id)
+    data["possibleAnswers"] = answers
+    data["answers"] = answers
     return data, 200
+
+
+@app.post("/upload-image")
+def upload_image():
+    """Upload une image pour une question."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return {"error": "Unauthorized"}, 401
+
+    token = auth_header.split(" ", 1)[1]
+    try:
+        decode_token(token)
+    except:
+        return {"error": "Unauthorized"}, 401
+
+    if 'file' not in request.files:
+        return {"error": "No file provided"}, 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return {"error": "No file selected"}, 400
+    
+    if file and allowed_file(file.filename):
+        # S'assurer que le dossier uploads existe
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        
+        # Créer un nom de fichier unique
+        import uuid
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        # Retourner un chemin relatif /uploads/ pour cohérence
+        return {"filename": filename, "url": f"/uploads/{filename}"}, 200
+    
+    return {"error": "File type not allowed"}, 400
 
 
 @app.post("/participations")
