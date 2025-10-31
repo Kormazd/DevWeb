@@ -183,13 +183,29 @@ def question_to_dict(q: Question) -> dict:
     """
     Transforme Question (dataclass) -> JSON renvoyé à Postman.
     """
+    # Exposer une URL d'image exploitable côté front (public/images)
+    img_url = None
+    if q.image:
+        s = str(q.image)
+        if s.startswith('http://') or s.startswith('https://'):
+            img_url = s
+        elif s.startswith('/images/'):
+            img_url = s
+        elif s.startswith('/uploads/') or s.startswith('/assets/'):
+            # migration: renvoyer vers /images/<filename>
+            img_url = f"/images/{s.split('/')[-1]}"
+        elif s.startswith('/'):
+            img_url = s
+        else:
+            img_url = f"/images/{s}"
+
     return {
         "id": q.id,
         "title": q.title,
         "text": q.text,
         "position": q.position,
         "image": q.image,
-        "image_url": f"/assets/{q.image}" if q.image else None,
+        "image_url": img_url,
     }
 
 

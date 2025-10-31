@@ -2,24 +2,17 @@
 import { onMounted, ref } from 'vue'
 import Storage from '@/services/ParticipationStorageService'
 import QuizApi from '@/services/QuizApiService'
-import megaUrl from '@/assets/Mega_Knight_03.png'
-import princeUrl from '@/assets/Prince_03.png'
-import reineUrl from '@/assets/Reine_archer_pekka.png'
+import { pickTwoRandom } from '@/data/sideImages'
 
 const topLocalScore = ref(0)
 const quizSize = ref(null)
 const topScores = ref([])
 const loading = ref(true)
 
-// Images latérales aléatoires
-const assetFiles = [megaUrl, princeUrl, reineUrl]
 const leftSide = ref('')
 const rightSide = ref('')
 function setRandomSides() {
-  if (!assetFiles.length) return
-  const pick = () => assetFiles[Math.floor(Math.random() * assetFiles.length)]
-  let l = pick(); let r = pick(); let guard = 0
-  while (r === l && guard < 5) { r = pick(); guard++ }
+  const [l, r] = pickTwoRandom(leftSide.value, rightSide.value)
   leftSide.value = l
   rightSide.value = r
 }
@@ -42,19 +35,19 @@ onMounted(async () => {
       <img v-if="leftSide" class="side-image left" :src="leftSide" alt="illustration gauche" />
       <div class="scores-center">
         <div class="header">
-          <h1>🏆 Classements</h1>
+          <h1>Classements</h1>
           <p>Découvre les meilleurs scores des joueurs !</p>
         </div>
 
         <!-- Bloc séparé: Nombre de questions -->
         <div class="quiz-info" v-if="!loading && quizSize !== null">
-          <span class="quiz-info__label">📚 Nombre de questions</span>
+          <span class="quiz-info__label">Nombre de questions</span>
           <strong class="quiz-info__value">{{ quizSize }}</strong>
         </div>
 
         <!-- Bloc séparé: Meilleur score local -->
         <div class="my-score" v-if="!loading">
-          <span class="my-score__label">🛡️ Ton meilleur score local</span>
+          <span class="my-score__label">Ton meilleur score local</span>
           <strong class="my-score__value">{{ topLocalScore }}</strong>
         </div>
 
@@ -63,16 +56,12 @@ onMounted(async () => {
 
           <div class="score-item" v-for="(s, idx) in topScores" :key="idx" :class="{ 'top-score': idx === 0 }">
             <span>
-              <span v-if="idx === 0">👑</span>
-              <span v-else-if="idx === 1">🥈</span>
-              <span v-else-if="idx === 2">🥉</span>
-              <span v-else>#{{ idx + 1 }}</span>
-              {{ s.playerName }}
+              #{{ idx + 1 }} {{ s.playerName }}
             </span>
             <strong>{{ s.score }}</strong>
           </div>
           <div v-if="topScores.length === 0" class="no-scores">
-            <p>💬 Aucun score enregistré pour le moment. Sois le premier !</p>
+            <p>Aucun score enregistré pour le moment. Sois le premier !</p>
           </div>
         </div>
 
@@ -190,18 +179,44 @@ onMounted(async () => {
 }
 
 .top-score {
-  /* Pas de fond gris, juste le texte en doré */
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(241, 196, 15, 0.15)) !important;
+  border: 2px solid rgba(212, 175, 55, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  position: relative;
+}
+
+.top-score::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(241, 196, 15, 0.1));
+  border-radius: 6px;
+  z-index: -1;
 }
 
 .top-score span,
 .top-score strong {
-  color: #d4af37;
+  color: #f5d36b;
   font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.top-score strong {
+  background: linear-gradient(135deg, #f5d36b, #d4af37);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.4em;
 }
 
 .top-score:hover {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(241, 196, 15, 0.2)) !important;
-  border-color: rgba(212, 175, 55, 0.3);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(241, 196, 15, 0.25)) !important;
+  border-color: rgba(212, 175, 55, 0.6) !important;
+  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+  transform: translateY(-2px);
 }
 
 .no-scores {

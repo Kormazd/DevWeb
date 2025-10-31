@@ -1,36 +1,17 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import QuizApi from '@/services/QuizApiService'
+import { pickTwoRandom } from '@/data/sideImages'
 
 const quizSize = ref(null)
 const loading = ref(true)
 const leftImg = ref('')
 const rightImg = ref('')
 
-// Prefer optimized assets when available, fallback to originals
-const optimizedModules = import.meta.glob('@/assets-optimized/*.{webp}', { eager: true, import: 'default' })
-const baseModules = import.meta.glob('@/assets/*.{png,jpg,jpeg,webp,svg}', { eager: true, import: 'default' })
-const assetFiles = Object.values(Object.keys(optimizedModules).length ? optimizedModules : baseModules)
 function setRandomSides() {
-  if (!assetFiles || assetFiles.length === 0) return
-
   const lastLeft = localStorage.getItem('home_left_img')
   const lastRight = localStorage.getItem('home_right_img')
-
-  let pool = assetFiles.filter(u => u !== lastLeft && u !== lastRight)
-  if (pool.length < 2) {
-    pool = [...assetFiles]
-  }
-
-  const randIndex = (max) => Math.floor(Math.random() * max)
-  let l = pool[randIndex(pool.length)]
-
-  let remaining = pool.filter(u => u !== l)
-  if (remaining.length === 0) {
-    remaining = assetFiles.filter(u => u !== l)
-  }
-  let r = remaining[randIndex(remaining.length)]
-
+  const [l, r] = pickTwoRandom(lastLeft, lastRight)
   leftImg.value = l
   rightImg.value = r
   localStorage.setItem('home_left_img', l)
@@ -51,30 +32,17 @@ onMounted(async () => {
     <div class="hero-sides">
       <img class="side-image left" :src="leftImg" alt="illustration gauche" loading="lazy" decoding="async" fetchpriority="low"/>
       <div class="header">
-      <h1>🏰 Quiz Clash Royale & Clash of Clans</h1>
+      <h1>Quiz Clash Royale & Clash of Clans</h1>
       <p>Teste tes connaissances sur les jeux Supercell !</p>
       <div class="quiz-info" v-if="!loading && quizSize !== null">
-        <p>📊 {{ quizSize }} questions t'attendent</p>
+        <p>{{ quizSize }} questions t'attendent</p>
       </div>
-      <router-link to="/new-quiz" class="btn-start">🎮 Commencer le quiz</router-link>
+      <router-link to="/new-quiz" class="btn-start">Commencer le quiz</router-link>
     </div>
       <img class="side-image right" :src="rightImg" alt="illustration droite" loading="lazy" decoding="async" fetchpriority="low"/>
     </div>
     
-    <div class="features">
-      <div class="feature-card">
-        <h3>🎯 Questions variées</h3>
-        <p>Clash Royale et Clash of Clans</p>
-      </div>
-      <div class="feature-card">
-        <h3>🏆 Classements</h3>
-        <p>Compare tes scores avec les autres</p>
-      </div>
-      <div class="feature-card">
-        <h3>🎨 Design immersif</h3>
-        <p>Interface médiévale et animations</p>
-      </div>
-    </div>
+    
   </section>
 </template>
 
@@ -149,8 +117,8 @@ onMounted(async () => {
   box-shadow: var(--shadow-button);
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
-  color: var(--text-primary);
+  background: linear-gradient(135deg, #F59E0B, #EAB308);
+  color: #222;
   text-decoration: none;
 }
 
@@ -171,7 +139,7 @@ onMounted(async () => {
 
 .btn-start:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
 }
 
 .features {

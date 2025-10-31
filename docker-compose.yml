@@ -1,0 +1,25 @@
+services:
+  api:
+    container_name: quiz-api
+    build:
+      context: ./quiz-api
+    ports:
+      - "5001:5000" # host:container (gunicorn binds 5000 in container)
+    volumes:
+      - ./quiz-api/DB_Browser_for_SQLite.db:/app/DB_Browser_for_SQLite.db
+    restart: unless-stopped
+
+  ui:
+    container_name: quiz-ui
+    build:
+      context: ./quiz-ui
+      args:
+        # important: browser needs to call host-exposed API
+        VITE_API_URL: http://localhost:5001
+    depends_on:
+      - api
+    ports:
+      - "8080:80" # serve static build via nginx
+    restart: unless-stopped
+
+

@@ -3,9 +3,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import QuizApi from '@/services/QuizApiService'
 import Storage from '@/services/ParticipationStorageService'
-import megaUrl from '@/assets/Mega_Knight_03.png'
-import princeUrl from '@/assets/Prince_03.png'
-import reineUrl from '@/assets/Reine_archer_pekka.png'
+import { imageUrl } from '@/services/api'
+import { pickTwoRandom } from '@/data/sideImages'
+import QuizEndScreen from '@/components/QuizEndScreen.vue'
 
 const router = useRouter()
 
@@ -30,15 +30,11 @@ const isCheatActive = computed(() => {
   return playerName && playerName.trim() === 'SUPERCELL'
 })
 
-// Images latérales aléatoires (packagées par Vite)
-const assetFiles = [megaUrl, princeUrl, reineUrl]
+// Images latérales aléatoires (depuis public/images/)
 const leftSide = ref('')
 const rightSide = ref('')
 function setRandomSides() {
-  if (!assetFiles.length) return
-  const pick = () => assetFiles[Math.floor(Math.random() * assetFiles.length)]
-  let l = pick(); let r = pick(); let guard = 0
-  while (r === l && guard < 5) { r = pick(); guard++ }
+  const [l, r] = pickTwoRandom(leftSide.value, rightSide.value)
   leftSide.value = l
   rightSide.value = r
 }
@@ -62,7 +58,16 @@ async function load() {
   error.value = ''
   const { status, data } = await QuizApi.getQuestions()
   if (status >= 200 && status < 300 && Array.isArray(data)) {
-    questions.value = data
+    // Mapper les questions et résoudre les URLs d'images
+    questions.value = data.map(q => ({
+      ...q,
+      // Résoudre l'URL de l'image avec la helper
+      image: imageUrl(q.image || q.image_url),
+      // S'assurer que answers existe (fallback sur possibleAnswers)
+      answers: Array.isArray(q.answers) ? q.answers
+        : Array.isArray(q.possibleAnswers) ? q.possibleAnswers
+        : []
+    }))
   } else {
     error.value = data?.error || 'Impossible de charger les questions'
   }
@@ -130,6 +135,13 @@ onMounted(async () => {
 watch(currentIndex, () => { setRandomSides(); pickTip() })
 
 function togglePause() { paused.value = !paused.value }
+
+function stopQuiz() {
+  if (confirm('Êtes-vous sûr de vouloir arrêter le quiz ? Votre progression ne sera pas enregistrée.')) {
+    router.replace({ name: 'HomePage' })
+  }
+}
+
 function shareProgress() {
   const answered = currentIndex.value
   const acc = Math.round((score.value / Math.max(1, answered)) * 100)
@@ -159,6 +171,7 @@ function shareProgress() {
               <div class="panel-top">
                 <button class="btn btn-small" @click="togglePause">{{ paused ? 'Reprendre' : 'Pause' }}</button>
                 <button class="btn btn-small btn-secondary" @click="shareProgress">Partager</button>
+                <button class="btn btn-small btn-danger" @click="stopQuiz">Arrêter</button>
               </div>
               <div class="meta">
                 <span>Question {{ currentIndex + 1 }} / {{ total }}</span>
@@ -168,7 +181,7 @@ function shareProgress() {
                 <div class="qc__header">
                   <h2 class="qc__title">{{ currentQuestion.title }}</h2>
                   <p v-if="currentQuestion.text" class="qc__subtitle">{{ currentQuestion.text }}</p>
-                  <img v-if="currentQuestion.image_url" :src="currentQuestion.image_url" :alt="currentQuestion.title" class="qc__image" />
+                  <img v-if="currentQuestion.image" :src="currentQuestion.image" :alt="currentQuestion.title" class="qc__image" />
                 </div>
                 <div class="qc__answers qc__answers--grid">
                   <button
@@ -187,7 +200,7 @@ function shareProgress() {
                   >
                     <span class="qc__badge">{{ idx + 1 }}</span>
                     <span class="qc__text">{{ a.text }}</span>
-                    <span v-if="isCheatActive && a.isCorrect && !showFeedback" class="cheat-indicator">✨</span>
+                    <span v-if="isCheatActive && a.isCorrect && !showFeedback" class="cheat-indicator">★</span>
                   </button>
                 </div>
                 <div class="actions">
@@ -196,7 +209,7 @@ function shareProgress() {
                   </button>
                 </div>
               </div>
-              <div class="tip" v-if="currentTip">💡 {{ currentTip }}</div>
+              <div class="tip" v-if="currentTip">{{ currentTip }}</div>
               <div class="progress-area">
                 <div class="progress-bar">
                   <div class="progress-fill" :style="{ width: ((currentIndex/Math.max(1,total))*100)+'%' }"></div>
@@ -214,13 +227,8 @@ function shareProgress() {
         </div>
       </div>
 
-      <div v-else class="result">
-        <div class="question-panel">
-          <h2>Terminé !</h2>
-          <p>Score: <strong>{{ score }}</strong> / {{ total }}</p>
-          <router-link class="btn" :to="{ name: 'HomePage' }">Retour accueil</router-link>
-        </div>
-      </div>
+      
+      <QuizEndScreen v-if="finished" :total="total" :correct="score" />
     </template>
   </section>
 </template>
@@ -240,10 +248,33 @@ function shareProgress() {
 .qc__answers { display: grid; gap: 0.75rem; }
 .qc__answers--grid { grid-template-columns: 1fr; }
 @media (min-width: 820px) { .qc__answers--grid { grid-template-columns: 1fr 1fr; gap: 1rem; } }
-.qc__answer { display: flex; align-items: center; gap: 0.75rem; width: 100%; text-align: left; background: #fff; border: 1px solid #e6e8eb; border-radius: 10px; padding: 0.85rem 1rem; cursor: pointer; transition: all 300ms ease; }
-.qc__answer:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(0,0,0,0.06); }
+.qc__answer { 
+  display: flex; 
+  align-items: center; 
+  gap: 0.75rem; 
+  width: 100%; 
+  text-align: left; 
+  background: #fff; 
+  border: 2px solid #e6e8eb; 
+  border-radius: 10px; 
+  padding: 0.85rem 1rem; 
+  cursor: pointer; 
+  transition: all 250ms ease; 
+  position: relative;
+}
+.qc__answer:hover:not(:disabled) { 
+  transform: translateY(-3px) scale(1.02); 
+  box-shadow: 0 12px 24px rgba(0,0,0,0.15), 0 0 0 3px rgba(74, 144, 226, 0.3);
+  border-color: #4A90E2;
+  background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%);
+  z-index: 10;
+}
 .qc__answer:disabled { cursor: not-allowed; opacity: 0.7; }
-.qc__answer--selected { border-color: #f1c40f; box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.25); }
+.qc__answer--selected { 
+  border-color: #f1c40f; 
+  box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.35), 0 4px 12px rgba(241, 196, 15, 0.2);
+  background: linear-gradient(135deg, #fff 0%, #fffef0 100%);
+}
 .qc__answer--correct { background: linear-gradient(135deg, #10b981, #059669); border-color: #10b981; color: #fff; animation: correctPulse 0.5s ease; }
 .qc__answer--correct .qc__text { color: #fff; }
 .qc__answer--correct .qc__badge { background: rgba(255, 255, 255, 0.3); color: #fff; }
@@ -260,7 +291,13 @@ function shareProgress() {
 /* Layout images latérales */
 .quiz-sides { width: min(1900px, 98vw); margin: 0 auto; display: grid; grid-template-columns: minmax(260px, 1fr) minmax(860px, 1040px) minmax(260px, 1fr); align-items: start; column-gap: 1.5rem; }
 .quiz-center { grid-column: 2; }
-.question-panel { background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 1rem 1.25rem; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+.question-panel { 
+  background: rgba(0,0,0,0.35); 
+  border: 1px solid rgba(212, 175, 55, 0.25); 
+  border-radius: 14px; 
+  padding: 1rem 1.25rem; 
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25), 0 0 0 1px rgba(212, 175, 55, 0.15);
+}
 .side-image { width: 100%; max-width: 600px; height: auto; object-fit: contain; filter: drop-shadow(0 12px 30px rgba(0,0,0,0.4)); opacity: 0.98; transition: transform .25s ease, opacity .25s ease; margin-top: 24px; }
 .side-image.left { justify-self: end; }
 .side-image.right { justify-self: start; }
@@ -271,6 +308,7 @@ function shareProgress() {
 .panel-top { display: flex; gap: 0.5rem; justify-content: flex-end; margin-bottom: 0.5rem; }
 .btn-small { padding: 0.4rem 0.7rem; font-size: 0.9rem; }
 .btn-secondary { background: linear-gradient(135deg, #3b82f6, #06b6d4); color: #fff; }
+.btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
 
 .tip { margin-top: 0.75rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; font-size: 0.95rem; }
 .progress-area { margin-top: 0.75rem; }
