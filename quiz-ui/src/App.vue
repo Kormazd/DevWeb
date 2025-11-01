@@ -35,7 +35,7 @@ import { RouterView } from 'vue-router'
 </template>
 
 <style>
-@import './assets/main.css';
+@import '/static/css/main.css';
 
 @font-face {
   font-family: 'ClashRegular';

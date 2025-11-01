@@ -4,8 +4,6 @@
 *.db
 *.sqlite
 *.sqlite3
-DB.db
-quiz.db
 
 # ===========================================
 # ENVIRONNEMENTS VIRTUELS PYTHON

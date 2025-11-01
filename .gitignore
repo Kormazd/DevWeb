@@ -133,3 +133,7 @@ settings.local.json
 # Fichiers de lock (garder package-lock.json mais ignorer yarn.lock si on utilise npm)
 yarn.lock
 pnpm-lock.yaml
+
+# Ne pas ignorer les assets publics du frontend (images + fonts)
+!quiz-ui/public/images/**
+!quiz-ui/public/fonts/**
