@@ -325,7 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Easter eggs et effets spÃ©ciaux
 document.addEventListener('keydown', (e) => {
-    // Konami Code: â†‘â†‘â†“â†“â†â†’â†â†’BA
     const konamiCode = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
     if (!window.konamiSequence) window.konamiSequence = [];
     
